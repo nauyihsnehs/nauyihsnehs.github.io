@@ -1,3 +1,8 @@
+const assetRoot = new URL(import.meta.url).pathname.includes("/src/")
+  ? "./public/"
+  : "./";
+const asset = (path) => `${assetRoot}${path}`;
+
 export const content = {
   site: {
     title: {
@@ -21,8 +26,8 @@ export const content = {
       zh: "我关注你的主要研究领域及其相邻学科之间的问题。请将这段文字替换为你所研究的问题、采用的方法，以及它为什么重要。",
     },
     portrait: {
-      primary: "./portrait-placeholder.svg",
-      alternate: "./portrait-alternate.svg",
+      primary: asset("portrait-placeholder.svg"),
+      alternate: asset("portrait-alternate.svg"),
       alt: {
         en: "Geometric placeholder portrait for Your Name",
         zh: "你的名字的几何肖像占位图",
@@ -44,7 +49,7 @@ export const content = {
       platform: "qq",
       label: "QQ",
       href: "",
-      qr: "./qr-qq-placeholder.svg",
+      qr: asset("qr-qq-placeholder.svg"),
       account: "000000000",
       qrAlt: {
         en: "Non-scannable placeholder for a QQ QR code",
@@ -55,7 +60,7 @@ export const content = {
       platform: "wechat",
       label: "WeChat",
       href: "",
-      qr: "./qr-wechat-placeholder.svg",
+      qr: asset("qr-wechat-placeholder.svg"),
       account: "your-wechat-id",
       qrAlt: {
         en: "Non-scannable placeholder for a WeChat QR code",
@@ -67,7 +72,7 @@ export const content = {
       platform: "telegram",
       label: "Telegram",
       href: "",
-      qr: "./qr-telegram-placeholder.svg",
+      qr: asset("qr-telegram-placeholder.svg"),
       account: "@your-telegram-account",
       qrAlt: {
         en: "Non-scannable placeholder for a Telegram QR code",
@@ -90,7 +95,7 @@ export const content = {
         zh: "我关注机器学习系统如何解释其行为，并帮助人们做出有依据的判断。",
       },
       image: {
-        src: "./teaser-placeholder.svg",
+        src: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder illustration for human-centered machine learning",
           zh: "以人为中心的机器学习示意图占位图",
@@ -111,7 +116,7 @@ export const content = {
         zh: "我探索如何将视觉、语言与行为信号组织成连贯、自然的交互方式。",
       },
       image: {
-        src: "./teaser-placeholder.svg",
+        src: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder illustration for multimodal interaction",
           zh: "多模态交互示意图占位图",
@@ -132,7 +137,7 @@ export const content = {
         zh: "我研究智能系统在不确定环境中的行为，以及如何在部署前衡量其能力边界。",
       },
       image: {
-        src: "./teaser-placeholder.svg",
+        src: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder illustration for reliable AI systems",
           zh: "可靠人工智能系统示意图占位图",
@@ -178,7 +183,7 @@ export const content = {
           href: "",
         },
       ],
-      logo: "./education-logo-1.svg",
+      logo: asset("education-logo-1.svg"),
       logoAlt: {
         en: "Placeholder logo for University or Institute",
         zh: "大学或研究机构的校徽占位图",
@@ -216,7 +221,7 @@ export const content = {
           href: "",
         },
       ],
-      logo: "./education-logo-2.svg",
+      logo: asset("education-logo-2.svg"),
       logoAlt: {
         en: "Placeholder logo for Previous University",
         zh: "此前就读大学的校徽占位图",
@@ -247,12 +252,12 @@ export const content = {
         { label: "Code", href: "" },
       ],
       teaser: {
-        poster: "./teaser-placeholder.svg",
+        poster: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder figure for the representative paper",
           zh: "代表论文的示意图占位图",
         },
-        motion: { type: "image", src: "./teaser-motion.svg" },
+        motion: { type: "image", src: asset("teaser-motion.svg") },
       },
     },
     {
@@ -274,12 +279,12 @@ export const content = {
       note: { en: "Oral presentation", zh: "口头报告" },
       links: [{ label: "DOI", href: "" }],
       teaser: {
-        poster: "./teaser-placeholder.svg",
+        poster: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder figure for another publication",
           zh: "另一篇论文的示意图占位图",
         },
-        motion: { type: "image", src: "./teaser-motion.svg" },
+        motion: { type: "image", src: asset("teaser-motion.svg") },
       },
     },
     {
@@ -300,12 +305,12 @@ export const content = {
       note: { en: "Preprint", zh: "预印本" },
       links: [{ label: "Project", href: "" }],
       teaser: {
-        poster: "./teaser-placeholder.svg",
+        poster: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder figure for earlier work",
           zh: "早期工作的示意图占位图",
         },
-        motion: { type: "image", src: "./teaser-motion.svg" },
+        motion: { type: "image", src: asset("teaser-motion.svg") },
       },
     },
   ],
@@ -325,12 +330,12 @@ export const content = {
         { label: "Demo", href: "" },
       ],
       teaser: {
-        poster: "./teaser-placeholder.svg",
+        poster: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder preview for a self-directed personal tool",
           zh: "自主个人工具的预览图占位图",
         },
-        motion: { type: "image", src: "./teaser-motion.svg" },
+        motion: { type: "image", src: asset("teaser-motion.svg") },
       },
     },
     {
@@ -345,12 +350,12 @@ export const content = {
       },
       links: [{ label: "Homepage", href: "" }],
       teaser: {
-        poster: "./teaser-placeholder.svg",
+        poster: asset("teaser-placeholder.svg"),
         alt: {
           en: "Placeholder preview for a self-initiated experiment",
           zh: "自主实验的预览图占位图",
         },
-        motion: { type: "image", src: "./teaser-motion.svg" },
+        motion: { type: "image", src: asset("teaser-motion.svg") },
       },
     },
   ],

@@ -1,14 +1,9 @@
-import "@fontsource/libertinus-serif/latin-400.css";
-import "@fontsource/libertinus-serif/latin-ext-400.css";
-import "@fontsource/libertinus-serif/latin-400-italic.css";
-import "@fontsource/libertinus-serif/latin-ext-400-italic.css";
-import "@fontsource/libertinus-serif/latin-600.css";
-import "@fontsource/libertinus-serif/latin-ext-600.css";
-import "@fontsource/libertinus-sans/latin-400.css";
-import "@fontsource/libertinus-sans/latin-ext-400.css";
-import "./styles.css";
 import { content } from "./content.js";
 
+const assetRoot = new URL(import.meta.url).pathname.includes("/src/")
+  ? "./public/"
+  : "./";
+const asset = (path) => `${assetRoot}${path}`;
 const root = document.documentElement;
 const app = document.querySelector("#app");
 const skipLink = document.querySelector("#skip-link");
@@ -43,7 +38,7 @@ let activeResearchArea = null;
 const motionUnloadTimers = new WeakMap();
 const motionUnloadDelay = 180;
 
-const buildTime = new Date(import.meta.env.VITE_BUILD_TIME);
+const buildTime = new Date(document.lastModified);
 
 const pick = (value) =>
   typeof value === "string" ? value : (value[language] ?? value.en);
@@ -115,16 +110,16 @@ const resourcesSectionIcon = `
 `;
 
 const contactIcons = {
-  educationEmail: "./icons/maildotru.svg",
-  personalEmail: "./icons/gmail.svg",
-  scholar: "./icons/googlescholar.svg",
-  orcid: "./icons/orcid.svg",
-  github: "./icons/github.svg",
-  researchgate: "./icons/researchgate.svg",
-  qq: "./icons/qq.svg",
-  wechat: "./icons/wechat.svg",
-  x: "./icons/x.svg",
-  telegram: "./icons/telegram.svg",
+  educationEmail: asset("icons/maildotru.svg"),
+  personalEmail: asset("icons/gmail.svg"),
+  scholar: asset("icons/googlescholar.svg"),
+  orcid: asset("icons/orcid.svg"),
+  github: asset("icons/github.svg"),
+  researchgate: asset("icons/researchgate.svg"),
+  qq: asset("icons/qq.svg"),
+  wechat: asset("icons/wechat.svg"),
+  x: asset("icons/x.svg"),
+  telegram: asset("icons/telegram.svg"),
 };
 
 const renderContactIcon = (platform) =>
