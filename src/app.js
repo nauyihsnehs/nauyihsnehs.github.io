@@ -1,9 +1,8 @@
 import { content } from "./content.js";
 
-const assetRoot = new URL(import.meta.url).pathname.includes("/src/")
-  ? "./public/"
-  : "./";
-const asset = (path) => `${assetRoot}${path}`;
+const sourceModule = new URL(import.meta.url).pathname.includes("/src/");
+const assetRoot = new URL(sourceModule ? "../public/" : "../", import.meta.url);
+const asset = (path) => new URL(path, assetRoot).href;
 const root = document.documentElement;
 const app = document.querySelector("#app");
 const skipLink = document.querySelector("#skip-link");
@@ -12,6 +11,8 @@ const themeColor = document.querySelector('meta[name="theme-color"]');
 const systemMode = window.matchMedia("(prefers-color-scheme: dark)");
 const hoverPointer = window.matchMedia("(hover: hover) and (pointer: fine)");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const selectableCard =
+  ".research-card, .publication-item, .education-item, .project-item";
 
 const savedLanguage = localStorage.getItem("academic-language");
 const savedTheme = localStorage.getItem("academic-theme");
@@ -844,7 +845,19 @@ const activateResearch = (card) => {
   setResearchRevealed(card, true);
 };
 
+const hasCardSelection = (target) => {
+  const selection = window.getSelection();
+  return Boolean(
+    target.closest(selectableCard) && selection && !selection.isCollapsed,
+  );
+};
+
 app.addEventListener("click", (event) => {
+  if (hasCardSelection(event.target)) {
+    event.preventDefault();
+    return;
+  }
+
   const settingsToggle = event.target.closest("[data-settings-toggle]");
   const contactButton = event.target.closest("[data-qr-contact]");
   const contactClose = event.target.closest("[data-contact-close]");
@@ -876,7 +889,11 @@ app.addEventListener("click", (event) => {
     return;
   }
 
-  if (media) toggleMedia(media);
+  if (media) {
+    const clickEnabled = media.dataset.motion !== "true" || !hoverPointer.matches;
+    clickEnabled && toggleMedia(media);
+    return;
+  }
 
   language = languageButton?.dataset.language ?? language;
   theme = themeButton?.dataset.theme ?? theme;
