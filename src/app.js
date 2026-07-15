@@ -830,7 +830,7 @@ const resetResearch = (except) => {
     )
     .forEach((card) => {
       if (card === except) return;
-      card.dataset.pinned = "false";
+      card.dataset.pinned === "true" && (card.dataset.pinned = "false");
       setResearchRevealed(card, false);
     });
 
@@ -840,13 +840,13 @@ const resetResearch = (except) => {
   }
 };
 
-const toggleResearch = (card) => {
-  const pinned = card.dataset.pinned !== "true";
+const activateResearch = (card) => {
+  if (card.dataset.pinned === "true") return;
+
   resetResearch(card);
-  card.dataset.pinned = String(pinned);
-  activeResearchArea = pinned ? card.dataset.researchCard : null;
-  setResearchRevealed(card, pinned);
-  !pinned && card.blur();
+  card.dataset.pinned = "true";
+  activeResearchArea = card.dataset.researchCard;
+  setResearchRevealed(card, true);
 };
 
 app.addEventListener("click", (event) => {
@@ -876,8 +876,8 @@ app.addEventListener("click", (event) => {
     return;
   }
 
-  if (researchCard && !hoverPointer.matches) {
-    toggleResearch(researchCard);
+  if (researchCard) {
+    !hoverPointer.matches && activateResearch(researchCard);
     return;
   }
 
@@ -899,9 +899,16 @@ app.addEventListener("click", (event) => {
 app.addEventListener("pointerover", (event) => {
   const settings = event.target.closest("[data-settings]");
   const media = event.target.closest("[data-swap-media]");
+  const researchCard = event.target.closest("[data-research-card]");
 
   const enteredSettings = settings && !settings.contains(event.relatedTarget);
+  const enteredResearch =
+    researchCard && !researchCard.contains(event.relatedTarget);
   enteredSettings && hoverPointer.matches && updateSettings(true);
+  if (enteredResearch && hoverPointer.matches) {
+    resetResearch(researchCard);
+    setResearchRevealed(researchCard, true);
+  }
   if (media && hoverPointer.matches) {
     const motionAllowed = media.dataset.motion !== "true" || !reducedMotion.matches;
     motionAllowed && setMediaActive(media, true);
@@ -911,12 +918,23 @@ app.addEventListener("pointerover", (event) => {
 app.addEventListener("pointerout", (event) => {
   const settings = event.target.closest("[data-settings]");
   const media = event.target.closest("[data-swap-media]");
+  const researchCard = event.target.closest("[data-research-card]");
 
   if (settings && !settings.contains(event.relatedTarget) && !settingsPinned) {
     updateSettings(false);
   }
   if (media && !media.contains(event.relatedTarget) && media.dataset.pinned !== "true") {
     setMediaActive(media, false);
+  }
+  if (
+    researchCard &&
+    !researchCard.contains(event.relatedTarget) &&
+    hoverPointer.matches
+  ) {
+    researchCard.dataset.pinned === "true" &&
+      (researchCard.dataset.pinned = "false");
+    setResearchRevealed(researchCard, false);
+    researchCard.blur();
   }
 });
 
@@ -960,7 +978,6 @@ app.addEventListener("keydown", (event) => {
   const researchCard = event.target.closest("[data-research-card]");
   if (researchCard && ["Enter", " "].includes(event.key)) {
     event.preventDefault();
-    toggleResearch(researchCard);
     return;
   }
   if (media && ["Enter", " "].includes(event.key)) {
