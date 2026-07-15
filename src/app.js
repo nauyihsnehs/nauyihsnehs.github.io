@@ -21,7 +21,15 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const savedLanguage = localStorage.getItem("academic-language");
 const savedTheme = localStorage.getItem("academic-theme");
 const savedMode = localStorage.getItem("academic-color-mode");
-const themeNames = ["white", "claude", "linkedin", "spotify", "youtube", "twitch"];
+const themeNames = [
+  "white",
+  "claude",
+  "linkedin",
+  "spotify",
+  "youtube",
+  "twitch",
+  "bilibili",
+];
 
 let language = ["en", "zh"].includes(savedLanguage) ? savedLanguage : "en";
 let theme = themeNames.includes(savedTheme) ? savedTheme : "white";
@@ -55,6 +63,27 @@ const gear = `
 const upArrow = `
   <svg aria-hidden="true" viewBox="0 0 24 24">
     <path d="m6.5 14.5 5.5-5.5 5.5 5.5" />
+  </svg>
+`;
+
+const educationSectionIcon = `
+  <svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24">
+    <path d="m3 9 9-4 9 4-9 4Z" />
+    <path d="M6.5 11.2v4.3c2.9 2.1 8.1 2.1 11 0v-4.3M21 9v5" />
+  </svg>
+`;
+
+const publicationsSectionIcon = `
+  <svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M7 3.5h10v14H7Z" />
+    <path d="M4 6.5v14h10M9.5 7.5h5M9.5 10.5h5M9.5 13.5h3.5" />
+  </svg>
+`;
+
+const projectsSectionIcon = `
+  <svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24">
+    <circle cx="5" cy="12" r="2" /><circle cx="19" cy="6" r="2" /><circle cx="19" cy="18" r="2" />
+    <path d="M7 12h4c3 0 3-6 6-6M11 12c3 0 3 6 6 6" />
   </svg>
 `;
 
@@ -98,6 +127,13 @@ const twitchTheme = `
   </svg>
 `;
 
+const bilibiliTheme = `
+  <svg class="theme-logo theme-logo--bilibili" aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M4 8.5c3-2.8 6-2.8 8 0s5 2.8 8 0M4 15.5c3-2.8 6-2.8 8 0s5 2.8 8 0" />
+    <circle cx="4" cy="8.5" r="1.25" /><circle cx="20" cy="15.5" r="1.25" />
+  </svg>
+`;
+
 const autoMode = `
   <svg class="mode-logo" aria-hidden="true" viewBox="0 0 24 24">
     <circle cx="12" cy="12" r="7.5" />
@@ -125,6 +161,7 @@ const themeOptions = [
   { value: "spotify", icon: spotifyTheme },
   { value: "youtube", icon: youtubeTheme },
   { value: "twitch", icon: twitchTheme },
+  { value: "bilibili", icon: bilibiliTheme },
 ];
 
 const modeOptions = [
@@ -143,7 +180,7 @@ const renderProfileLinks = () =>
     )
     .join("");
 
-const renderPublicationLinks = (links) =>
+const renderLinks = (links) =>
   links
     .map(
       ({ label, href }) =>
@@ -169,21 +206,78 @@ const renderEducationLogo = (item) => {
     : `<span class="education-logo">${logo}</span>`;
 };
 
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const formatEducationDate = (value) => {
+  const [year, month] = value.split("-");
+  const monthNumber = Number.parseInt(month, 10);
+  if (!year || !Number.isInteger(monthNumber) || monthNumber < 1 || monthNumber > 12) {
+    return value;
+  }
+
+  return language === "zh"
+    ? `${year}年${monthNumber}月`
+    : `${monthNames[monthNumber - 1]} ${year}`;
+};
+
+const renderEducationDate = (value, position) => `
+  <div class="education-boundary education-boundary--${position}">
+    <time class="education-date" datetime="${value}">${formatEducationDate(value)}</time>
+  </div>
+`;
+
+const renderEducationHighlights = (highlights) => {
+  if (!highlights?.length) return "";
+
+  return `
+    <ul class="education-highlights">
+      ${highlights
+        .map(({ text, href }) => {
+          const label = pick(text);
+          return `<li>${
+            href
+              ? `<a href="${href}" target="_blank" rel="noreferrer">${label}</a>`
+              : `<span>${label}</span>`
+          }</li>`;
+        })
+        .join("")}
+    </ul>
+  `;
+};
+
 const renderEducation = () =>
   content.education
-    .map(
-      (item) => `
+    .map((item) => {
+      const hasHighlights = Boolean(item.highlights?.length);
+      return `
         <article class="education-item">
-          ${renderEducationLogo(item)}
-          <p class="education-period">${item.period}</p>
-          <div class="education-copy">
-            <h3>${pick(item.institution)}</h3>
-            <p>${pick(item.degree)}</p>
-            <p class="secondary">${pick(item.detail)}</p>
+          ${renderEducationDate(item.startDate, "start")}
+          <div class="education-copy${hasHighlights ? "" : " education-copy--compact"}">
+            ${renderEducationLogo(item)}
+            <div class="education-text">
+              <h3>${pick(item.institution)}</h3>
+              <p>${pick(item.degree)}</p>
+              <p class="secondary">${pick(item.detail)}</p>
+            </div>
+            ${renderEducationHighlights(item.highlights)}
           </div>
+          ${renderEducationDate(item.endDate, "end")}
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 
 const renderMotionMedia = (teaser) => {
@@ -195,14 +289,14 @@ const renderMotionMedia = (teaser) => {
     : `<img class="media-alternate" data-motion-image data-src="${motion.src}" alt="" aria-hidden="true" />`;
 };
 
-const renderTeaser = (teaser) => `
+const renderTeaser = (teaser, label) => `
   <div
     class="swap-media teaser-media"
     data-swap-media
     data-motion="true"
     role="button"
     tabindex="0"
-    aria-label="${pick(content.labels.showMotion)}"
+    aria-label="${pick(label)}"
     aria-pressed="false"
   >
     <img class="media-primary" src="${teaser.poster}" alt="${pick(teaser.alt)}" loading="lazy" />
@@ -222,13 +316,38 @@ const renderPublications = () =>
     .map(
       (publication) => `
         <article class="publication-item">
-          ${renderTeaser(publication.teaser)}
+          ${renderTeaser(publication.teaser, content.labels.showMotion)}
           <div class="publication-copy">
             <p class="publication-meta">${publication.year} · ${pick(publication.venue)} · ${pick(publication.note)}</p>
             <h3>${renderPublicationTitle(publication)}</h3>
             <p class="publication-authors">${renderAuthors(publication.authors)}</p>
             <div class="publication-links" aria-label="${pick(content.labels.publicationLinks)}">
-              ${renderPublicationLinks(publication.links)}
+              ${renderLinks(publication.links)}
+            </div>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+const renderProjectTitle = (project) => {
+  const title = pick(project.title);
+  return project.titleUrl
+    ? `<a href="${project.titleUrl}" target="_blank" rel="noreferrer">${title}</a>`
+    : title;
+};
+
+const renderProjects = () =>
+  content.projects
+    .map(
+      (project) => `
+        <article class="project-item">
+          ${renderTeaser(project.teaser, content.labels.showProjectMotion)}
+          <div class="project-copy">
+            <h3>${renderProjectTitle(project)}</h3>
+            <p class="project-description">${pick(project.description)}</p>
+            <div class="project-links" aria-label="${pick(content.labels.projectLinks)}">
+              ${renderLinks(project.links)}
             </div>
           </div>
         </article>
@@ -331,6 +450,10 @@ const renderFloatingTools = () => `
   </div>
 `;
 
+const renderSectionTitle = (id, label, icon) => `
+  <h2 id="${id}">${icon}<span>${pick(label)}</span></h2>
+`;
+
 const applyAppearance = () => {
   const activeMode = resolvedMode();
   root.dataset.theme = theme;
@@ -349,6 +472,8 @@ const applyAppearance = () => {
     "youtube-dark": "#1b1112",
     "twitch-light": "#faf7ff",
     "twitch-dark": "#181323",
+    "bilibili-light": "#fff6fa",
+    "bilibili-dark": "#1d1218",
   }[`${theme}-${activeMode}`];
 };
 
@@ -374,14 +499,19 @@ const render = () => {
         </div>
       </header>
 
-      <section class="content-section" aria-labelledby="education-title">
-        <h2 id="education-title">${pick(content.labels.educationTitle)}</h2>
-        <div class="item-list">${renderEducation()}</div>
+      <section class="content-section" aria-labelledby="publications-title">
+        ${renderSectionTitle("publications-title", content.labels.publicationsTitle, publicationsSectionIcon)}
+        <div class="publication-list">${renderPublications()}</div>
       </section>
 
-      <section class="content-section" aria-labelledby="publications-title">
-        <h2 id="publications-title">${pick(content.labels.publicationsTitle)}</h2>
-        <div class="item-list">${renderPublications()}</div>
+      <section class="content-section" aria-labelledby="education-title">
+        ${renderSectionTitle("education-title", content.labels.educationTitle, educationSectionIcon)}
+        <div class="education-timeline">${renderEducation()}</div>
+      </section>
+
+      <section class="content-section" aria-labelledby="projects-title">
+        ${renderSectionTitle("projects-title", content.labels.projectsTitle, projectsSectionIcon)}
+        <div class="project-list">${renderProjects()}</div>
       </section>
 
       <footer>

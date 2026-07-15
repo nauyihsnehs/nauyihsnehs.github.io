@@ -5,8 +5,8 @@ export const content = {
       zh: "你的名字 — 学术主页",
     },
     description: {
-      en: "Research, education, and selected publications by Your Name.",
-      zh: "你的名字的研究方向、教育经历与代表论文。",
+      en: "Research, education, selected publications, and personal projects by Your Name.",
+      zh: "你的名字的研究方向、教育经历、代表论文与个人项目。",
     },
   },
   profile: {
@@ -37,7 +37,8 @@ export const content = {
   ],
   education: [
     {
-      period: "20XX — 20XX",
+      startDate: "20XX-09",
+      endDate: "20XY-06",
       institution: {
         en: "University or Institute",
         zh: "大学或研究机构",
@@ -50,6 +51,22 @@ export const content = {
         en: "Advisor: Name · City, Country",
         zh: "导师：姓名 · 城市，国家",
       },
+      highlights: [
+        {
+          text: {
+            en: "Recipient of an academic honor or fellowship",
+            zh: "曾获学术荣誉或奖学金",
+          },
+          href: "",
+        },
+        {
+          text: {
+            en: "Thesis: A concise placeholder thesis title",
+            zh: "毕设：简洁准确的论文题目占位文字",
+          },
+          href: "",
+        },
+      ],
       logo: "./education-logo-1.svg",
       logoAlt: {
         en: "Placeholder logo for University or Institute",
@@ -58,7 +75,8 @@ export const content = {
       institutionUrl: "",
     },
     {
-      period: "20XX — 20XX",
+      startDate: "20XX-09",
+      endDate: "20XY-06",
       institution: {
         en: "Previous University",
         zh: "此前就读大学",
@@ -71,6 +89,22 @@ export const content = {
         en: "Honors or relevant concentration · City, Country",
         zh: "荣誉或相关方向 · 城市，国家",
       },
+      highlights: [
+        {
+          text: {
+            en: "Graduated with an academic distinction",
+            zh: "以优异成绩毕业",
+          },
+          href: "",
+        },
+        {
+          text: {
+            en: "Thesis: An earlier project or dissertation title",
+            zh: "毕设：早期项目或学位论文题目",
+          },
+          href: "",
+        },
+      ],
       logo: "./education-logo-2.svg",
       logoAlt: {
         en: "Placeholder logo for Previous University",
@@ -164,10 +198,56 @@ export const content = {
       },
     },
   ],
+  projects: [
+    {
+      title: {
+        en: "A self-directed tool for a recurring task",
+        zh: "用于处理重复任务的自主工具",
+      },
+      titleUrl: "",
+      description: {
+        en: "Replace this placeholder with a concise explanation of a personal tool you designed, the problem it addresses, and the people who may find it useful.",
+        zh: "请将这段占位文字替换为你自主设计的个人工具、它所解决的问题，以及可能从中受益的使用者。",
+      },
+      links: [
+        { label: "Code", href: "" },
+        { label: "Demo", href: "" },
+      ],
+      teaser: {
+        poster: "./teaser-placeholder.svg",
+        alt: {
+          en: "Placeholder preview for a self-directed personal tool",
+          zh: "自主个人工具的预览图占位图",
+        },
+        motion: { type: "image", src: "./teaser-motion.svg" },
+      },
+    },
+    {
+      title: {
+        en: "An experiment in a subject worth exploring",
+        zh: "围绕感兴趣主题开展的实验",
+      },
+      titleUrl: "",
+      description: {
+        en: "Use this entry for a self-initiated experiment or small system developed outside formal employment, described by its purpose rather than a list of technologies.",
+        zh: "这里可介绍一项在正式受雇工作之外自主开展的实验或小型系统，重点说明其目的，而不是罗列技术栈。",
+      },
+      links: [{ label: "Homepage", href: "" }],
+      teaser: {
+        poster: "./teaser-placeholder.svg",
+        alt: {
+          en: "Placeholder preview for a self-initiated experiment",
+          zh: "自主实验的预览图占位图",
+        },
+        motion: { type: "image", src: "./teaser-motion.svg" },
+      },
+    },
+  ],
   labels: {
     skip: { en: "Skip to content", zh: "跳到主要内容" },
     personalLinks: { en: "Personal links", zh: "个人链接" },
     publicationLinks: { en: "Publication links", zh: "论文链接" },
+    projectLinks: { en: "Project links", zh: "项目链接" },
     language: { en: "Language", zh: "语言" },
     theme: { en: "Theme", zh: "主题" },
     mode: { en: "Appearance", zh: "明暗模式" },
@@ -179,11 +259,13 @@ export const content = {
     spotify: { en: "Spotify green", zh: "Spotify 绿" },
     youtube: { en: "YouTube red", zh: "YouTube 红" },
     twitch: { en: "Twitch purple", zh: "Twitch 紫" },
+    bilibili: { en: "Bilibili pink", zh: "Bilibili 粉" },
     auto: { en: "Auto", zh: "自动" },
     light: { en: "Light", zh: "浅色" },
     dark: { en: "Dark", zh: "深色" },
     educationTitle: { en: "Education", zh: "教育经历" },
     publicationsTitle: { en: "Publications", zh: "论文列表" },
+    projectsTitle: { en: "Personal Projects", zh: "个人项目" },
     replaceLink: { en: "Add URL", zh: "添加链接" },
     showAlternatePortrait: {
       en: "Show alternate portrait",
@@ -192,6 +274,10 @@ export const content = {
     showMotion: {
       en: "Play publication preview",
       zh: "播放论文动态预览",
+    },
+    showProjectMotion: {
+      en: "Play project preview",
+      zh: "播放项目动态预览",
     },
     backToTop: { en: "Back to top", zh: "回到顶部" },
     lastUpdated: { en: "Last updated", zh: "最后更新" },
