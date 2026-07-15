@@ -39,6 +39,7 @@ let settingsPinned = false;
 let backToTopVisible = false;
 let activeContact = null;
 let contactTrigger = null;
+let activeResearchArea = null;
 const motionUnloadTimers = new WeakMap();
 const motionUnloadDelay = 180;
 
@@ -88,6 +89,28 @@ const projectsSectionIcon = `
   <svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24">
     <circle cx="5" cy="12" r="2" /><circle cx="19" cy="6" r="2" /><circle cx="19" cy="18" r="2" />
     <path d="M7 12h4c3 0 3-6 6-6M11 12c3 0 3 6 6 6" />
+  </svg>
+`;
+
+const contactSectionIcon = `
+  <svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M3.5 5.5h17v13h-17Z" /><path d="m4 6 8 7 8-7" />
+  </svg>
+`;
+
+const researchSectionIcon = `
+  <svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="2.2" />
+    <path d="M4.2 8.2c1.8-3.1 4.3-4.6 6-3.6 1.8 1 2.1 4.1.3 7.2s-4.3 4.6-6 3.6c-1.8-1-2.1-4.1-.3-7.2Z" />
+    <path d="M13.5 5c3.6 0 6.1 1.6 6.1 3.7s-2.5 3.7-6.1 3.7-6.1-1.6-6.1-3.7S9.9 5 13.5 5Z" transform="rotate(60 12 12)" />
+  </svg>
+`;
+
+const resourcesSectionIcon = `
+  <svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24">
+    <path d="M8.5 15.5 6 18a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0" transform="translate(3 -2)" />
+    <path d="m15.5 8.5 2.5-2.5a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0" transform="translate(-3 2)" />
+    <path d="m8.5 15.5 7-7" />
   </svg>
 `;
 
@@ -226,39 +249,42 @@ const renderExternalIcon = ({ platform, label, href }) =>
 const renderSocialIcon = (item) => {
   if (item.qr) {
     return `
-      <button
-        class="profile-icon-link"
-        type="button"
-        data-platform="${item.platform}"
-        data-qr-contact="${item.platform}"
-        aria-label="${item.label}"
-        title="${item.label}"
-        aria-haspopup="dialog"
-        aria-controls="contact-popover"
-        aria-expanded="${activeContact === item.platform}"
-      >${renderContactIcon(item.platform)}</button>
+      <span class="contact-icon-anchor" data-contact-anchor="${item.platform}">
+        <button
+          class="profile-icon-link"
+          type="button"
+          data-platform="${item.platform}"
+          data-qr-contact="${item.platform}"
+          aria-label="${item.label}"
+          title="${item.label}"
+          aria-haspopup="dialog"
+          aria-controls="contact-popover-${item.platform}"
+          aria-expanded="${activeContact === item.platform}"
+        >${renderContactIcon(item.platform)}</button>
+        ${activeContact === item.platform ? renderContactPopover(item.platform) : ""}
+      </span>
     `;
   }
 
   return renderExternalIcon(item);
 };
 
-const renderContactPopover = () => {
-  const contact = content.socialLinks.find(({ platform }) => platform === activeContact);
+const renderContactPopover = (platform = activeContact) => {
+  const contact = content.socialLinks.find((item) => item.platform === platform);
   if (!contact) return "";
 
   return `
-    <div class="profile-contact-popover" id="contact-popover" data-contact-popover role="dialog" aria-modal="false" aria-labelledby="contact-popover-title">
+    <div class="profile-contact-popover" id="contact-popover-${contact.platform}" data-contact-popover role="dialog" aria-modal="false" aria-labelledby="contact-popover-title-${contact.platform}">
       <button class="contact-popover-close" type="button" data-contact-close aria-label="${pick(content.labels.closeContact)}" title="${pick(content.labels.closeContact)}">×</button>
-      <strong id="contact-popover-title">${contact.label}</strong>
+      <strong id="contact-popover-title-${contact.platform}">${contact.label}</strong>
       <img src="${contact.qr}" alt="${pick(contact.qrAlt)}" width="160" height="160" loading="lazy" />
       <span class="contact-account">${contact.account}</span>
     </div>
   `;
 };
 
-const renderProfileContacts = () => `
-  <div class="profile-contacts" data-contact-area aria-label="${pick(content.labels.personalLinks)}">
+const renderContacts = () => `
+  <div class="contact-panel" data-contact-area role="group" aria-label="${pick(content.labels.personalLinks)}">
     <div class="profile-email-row" role="group" aria-label="${pick(content.labels.emails)}">
       ${renderEmailLinks()}
     </div>
@@ -266,9 +292,47 @@ const renderProfileContacts = () => `
       ${content.academicLinks.map(renderExternalIcon).join("")}
       ${content.socialLinks.map(renderSocialIcon).join("")}
     </div>
-    ${renderContactPopover()}
   </div>
 `;
+
+const renderResearchAreas = () =>
+  content.researchAreas
+    .map((area, index) => {
+      const areaId = `research-area-${index}`;
+      const pinned = activeResearchArea === String(index);
+      return `
+        <article
+          class="research-card"
+          data-research-card="${index}"
+          data-pinned="${pinned}"
+          data-revealed="${pinned}"
+          role="button"
+          tabindex="0"
+          aria-expanded="${pinned}"
+          aria-describedby="${areaId}-description"
+        >
+          <div class="research-visual">
+            <img src="${area.image.src}" alt="${pick(area.image.alt)}" loading="lazy" />
+            <p class="research-description" id="${areaId}-description">${pick(area.description)}</p>
+          </div>
+          <h3>${pick(area.title)}</h3>
+          <ul class="research-keywords" aria-label="${pick(area.title)}">
+            ${pick(area.keywords).map((keyword) => `<li>${keyword}</li>`).join("")}
+          </ul>
+        </article>
+      `;
+    })
+    .join("");
+
+const renderResourceCategories = () =>
+  content.resourceCategories
+    .map(({ title, href }) => {
+      const label = pick(title);
+      return href
+        ? `<a class="resource-card" href="${href}" target="_blank" rel="noreferrer"><span>${label}</span>${arrow}</a>`
+        : `<span class="resource-card resource-card--empty" title="${pick(content.labels.replaceLink)}"><span>${label}</span><span aria-hidden="true">＋</span></span>`;
+    })
+    .join("");
 
 const renderLinks = (links) =>
   links
@@ -583,9 +647,18 @@ const render = () => {
           ${renderProfileName()}
           <p class="profile-role">${pick(content.profile.role)}</p>
           <p class="profile-introduction">${pick(content.profile.introduction)}</p>
-          ${renderProfileContacts()}
         </div>
       </header>
+
+      <section class="content-section contact-section" aria-labelledby="contact-title">
+        ${renderSectionTitle("contact-title", content.labels.contactTitle, contactSectionIcon)}
+        ${renderContacts()}
+      </section>
+
+      <section class="content-section research-section" aria-labelledby="research-areas-title">
+        ${renderSectionTitle("research-areas-title", content.labels.researchAreasTitle, researchSectionIcon)}
+        <div class="research-grid">${renderResearchAreas()}</div>
+      </section>
 
       <section class="content-section" aria-labelledby="publications-title">
         ${renderSectionTitle("publications-title", content.labels.publicationsTitle, publicationsSectionIcon)}
@@ -600,6 +673,13 @@ const render = () => {
       <section class="content-section" aria-labelledby="projects-title">
         ${renderSectionTitle("projects-title", content.labels.projectsTitle, projectsSectionIcon)}
         <div class="project-list">${renderProjects()}</div>
+      </section>
+
+      <section class="content-section resources-section" aria-labelledby="resources-title">
+        ${renderSectionTitle("resources-title", content.labels.resourcesTitle, resourcesSectionIcon)}
+        <div class="resource-grid" role="group" aria-label="${pick(content.labels.resourceLinks)}">
+          ${renderResourceCategories()}
+        </div>
       </section>
 
       <footer>
@@ -648,9 +728,10 @@ const toggleContact = (platform, trigger) => {
 
   activeContact = platform;
   contactTrigger = trigger;
-  const contactArea = app.querySelector("[data-contact-area]");
-  contactArea?.querySelector("[data-contact-popover]")?.remove();
-  contactArea?.insertAdjacentHTML("beforeend", renderContactPopover());
+  app.querySelector("[data-contact-popover]")?.remove();
+  trigger
+    .closest("[data-contact-anchor]")
+    ?.insertAdjacentHTML("beforeend", renderContactPopover(platform));
   app.querySelectorAll("[data-qr-contact]").forEach((button) =>
     button.setAttribute(
       "aria-expanded",
@@ -732,6 +813,42 @@ const toggleMedia = (media) => {
   setMediaActive(media, pinned);
 };
 
+const setResearchRevealed = (card, revealed) => {
+  if (card.dataset.revealed === String(revealed)) return;
+  card.dataset.revealed = String(revealed);
+  card.setAttribute("aria-expanded", String(revealed));
+};
+
+const resetResearch = (except) => {
+  const pinnedCard = activeResearchArea
+    ? app.querySelector(`[data-research-card="${activeResearchArea}"]`)
+    : null;
+
+  app
+    .querySelectorAll(
+      '[data-research-card][data-pinned="true"], [data-research-card][data-revealed="true"]',
+    )
+    .forEach((card) => {
+      if (card === except) return;
+      card.dataset.pinned = "false";
+      setResearchRevealed(card, false);
+    });
+
+  if (!except || activeResearchArea !== except.dataset.researchCard) {
+    activeResearchArea = null;
+    !except && pinnedCard?.blur();
+  }
+};
+
+const toggleResearch = (card) => {
+  const pinned = card.dataset.pinned !== "true";
+  resetResearch(card);
+  card.dataset.pinned = String(pinned);
+  activeResearchArea = pinned ? card.dataset.researchCard : null;
+  setResearchRevealed(card, pinned);
+  !pinned && card.blur();
+};
+
 app.addEventListener("click", (event) => {
   const settingsToggle = event.target.closest("[data-settings-toggle]");
   const contactButton = event.target.closest("[data-qr-contact]");
@@ -740,6 +857,7 @@ app.addEventListener("click", (event) => {
   const themeButton = event.target.closest("[data-theme]");
   const modeButtonElement = event.target.closest("[data-mode]");
   const media = event.target.closest("[data-swap-media]");
+  const researchCard = event.target.closest("[data-research-card]");
 
   if (settingsToggle) {
     const closeOpenPanel = settingsOpen;
@@ -755,6 +873,11 @@ app.addEventListener("click", (event) => {
 
   if (contactButton) {
     toggleContact(contactButton.dataset.qrContact, contactButton);
+    return;
+  }
+
+  if (researchCard && !hoverPointer.matches) {
+    toggleResearch(researchCard);
     return;
   }
 
@@ -800,7 +923,12 @@ app.addEventListener("pointerout", (event) => {
 app.addEventListener("focusin", (event) => {
   const settings = event.target.closest("[data-settings]");
   const media = event.target.closest("[data-swap-media]");
+  const researchCard = event.target.closest("[data-research-card]");
   settings && updateSettings(true);
+  if (researchCard) {
+    resetResearch(researchCard);
+    setResearchRevealed(researchCard, true);
+  }
   if (media) {
     const motionAllowed = media.dataset.motion !== "true" || !reducedMotion.matches;
     motionAllowed && setMediaActive(media, true);
@@ -810,6 +938,7 @@ app.addEventListener("focusin", (event) => {
 app.addEventListener("focusout", (event) => {
   const settings = event.target.closest("[data-settings]");
   const media = event.target.closest("[data-swap-media]");
+  const researchCard = event.target.closest("[data-research-card]");
 
   if (settings && !settings.contains(event.relatedTarget) && !settingsPinned) {
     updateSettings(false);
@@ -817,10 +946,23 @@ app.addEventListener("focusout", (event) => {
   if (media && !media.contains(event.relatedTarget) && media.dataset.pinned !== "true") {
     setMediaActive(media, false);
   }
+  if (
+    researchCard &&
+    !researchCard.contains(event.relatedTarget) &&
+    researchCard.dataset.pinned !== "true"
+  ) {
+    setResearchRevealed(researchCard, false);
+  }
 });
 
 app.addEventListener("keydown", (event) => {
   const media = event.target.closest("[data-swap-media]");
+  const researchCard = event.target.closest("[data-research-card]");
+  if (researchCard && ["Enter", " "].includes(event.key)) {
+    event.preventDefault();
+    toggleResearch(researchCard);
+    return;
+  }
   if (media && ["Enter", " "].includes(event.key)) {
     event.preventDefault();
     toggleMedia(media);
@@ -854,8 +996,17 @@ document.addEventListener("click", (event) => {
     settingsPinned = false;
     updateSettings(false);
   }
-  if (activeContact && !event.target.closest("[data-contact-area]")) {
+  if (
+    activeContact &&
+    !event.target.closest(`[data-contact-anchor="${activeContact}"]`)
+  ) {
     closeContact(true);
+  }
+  if (
+    activeResearchArea &&
+    !event.target.closest(`[data-research-card="${activeResearchArea}"]`)
+  ) {
+    resetResearch();
   }
   if (!event.target.closest("[data-swap-media]")) resetMedia();
 });
@@ -865,6 +1016,7 @@ document.addEventListener("keydown", (event) => {
   const restoreContactFocus = activeContact;
   const restoreSettingsFocus = settingsOpen;
   closeContact(Boolean(restoreContactFocus));
+  resetResearch();
   settingsPinned = false;
   updateSettings(false);
   resetMedia();

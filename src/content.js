@@ -75,6 +75,77 @@ export const content = {
       },
     },
   ],
+  researchAreas: [
+    {
+      title: {
+        en: "Human-Centered Machine Learning",
+        zh: "以人为中心的机器学习",
+      },
+      keywords: {
+        en: ["Interaction", "Interpretability", "Evaluation"],
+        zh: ["交互", "可解释性", "评估"],
+      },
+      description: {
+        en: "I study how machine-learning systems can communicate their behavior and support informed human decisions.",
+        zh: "我关注机器学习系统如何解释其行为，并帮助人们做出有依据的判断。",
+      },
+      image: {
+        src: "./teaser-placeholder.svg",
+        alt: {
+          en: "Placeholder illustration for human-centered machine learning",
+          zh: "以人为中心的机器学习示意图占位图",
+        },
+      },
+    },
+    {
+      title: {
+        en: "Multimodal Interaction",
+        zh: "多模态交互",
+      },
+      keywords: {
+        en: ["Vision", "Language", "Interfaces"],
+        zh: ["视觉", "语言", "界面"],
+      },
+      description: {
+        en: "I explore interfaces that combine visual, linguistic, and behavioral signals into coherent interactions.",
+        zh: "我探索如何将视觉、语言与行为信号组织成连贯、自然的交互方式。",
+      },
+      image: {
+        src: "./teaser-placeholder.svg",
+        alt: {
+          en: "Placeholder illustration for multimodal interaction",
+          zh: "多模态交互示意图占位图",
+        },
+      },
+    },
+    {
+      title: {
+        en: "Reliable AI Systems",
+        zh: "可靠人工智能系统",
+      },
+      keywords: {
+        en: ["Robustness", "Uncertainty", "Deployment"],
+        zh: ["鲁棒性", "不确定性", "部署"],
+      },
+      description: {
+        en: "I investigate how intelligent systems behave under uncertainty and how their limitations can be measured before deployment.",
+        zh: "我研究智能系统在不确定环境中的行为，以及如何在部署前衡量其能力边界。",
+      },
+      image: {
+        src: "./teaser-placeholder.svg",
+        alt: {
+          en: "Placeholder illustration for reliable AI systems",
+          zh: "可靠人工智能系统示意图占位图",
+        },
+      },
+    },
+  ],
+  resourceCategories: [
+    { title: { en: "Datasets", zh: "数据集" }, href: "" },
+    { title: { en: "Academic Tools", zh: "学术工具" }, href: "" },
+    { title: { en: "Reading & Blogs", zh: "阅读与博客" }, href: "" },
+    { title: { en: "Learning Materials", zh: "学习资料" }, href: "" },
+  ],
   education: [
     {
       startDate: "20XX-09",
@@ -310,8 +381,12 @@ export const content = {
     light: { en: "Light", zh: "浅色" },
     dark: { en: "Dark", zh: "深色" },
     educationTitle: { en: "Education", zh: "教育经历" },
+    contactTitle: { en: "Contact", zh: "联系方式" },
+    researchAreasTitle: { en: "Research Areas", zh: "研究领域" },
     publicationsTitle: { en: "Publications", zh: "论文列表" },
     projectsTitle: { en: "Personal Projects", zh: "个人项目" },
+    resourcesTitle: { en: "Related Resources", zh: "相关资源" },
+    resourceLinks: { en: "Resource category links", zh: "资源分类链接" },
     replaceLink: { en: "Add URL", zh: "添加链接" },
     showAlternatePortrait: {
       en: "Show alternate portrait",
