@@ -3,29 +3,24 @@
   font-family: "Libertinus Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-synthesis: none;
   --canvas: #ffffff;
-  --surface: #f5f5f3;
-  --ink: #171717;
-  --secondary: #4f4f4f;
-  --faint: #707070;
-  --line: #d5d5d2;
-  --control: #eeeeeb;
-  --control-active: #242424;
+  --surface: #f5f5f2;
+  --ink: #0d0d0d;
+  --secondary: #4d4d49;
+  --faint: #73736d;
+  --line: #d9d9d3;
+  --control: #ecece8;
+  --control-active: #0d0d0d;
   --control-active-ink: #ffffff;
-  --link: #1f477a;
-  --selection: #cfe0f4;
-  --selection-ink: #10243d;
+  --link: #2d2d2a;
+  --selection: #dcdcd7;
+  --selection-ink: #111110;
   --panel-shadow: rgba(0, 0, 0, 0.14);
-  --accent: #171717;
-  --accent-heading: #171717;
+  --accent: #1a1a18;
+  --accent-heading: #1a1a18;
   --accent-ink: #ffffff;
   --accent-soft: color-mix(in srgb, var(--accent) 10%, var(--canvas));
-  --shape-radius: 0px;
-  --theme-banner: linear-gradient(
-    90deg,
-    var(--ink) 0 36%,
-    var(--canvas) 36% 38%,
-    var(--ink) 38% 100%
-  );
+  --shape-radius: 8px;
+  --theme-banner: var(--surface);
   background: var(--canvas);
   color: var(--ink);
   scroll-behavior: smooth;
@@ -190,22 +185,22 @@
 
 :root[data-resolved-mode="dark"] {
   color-scheme: dark;
-  --canvas: #161616;
-  --surface: #202020;
-  --ink: #f1f1f1;
-  --secondary: #c7c7c7;
-  --faint: #a6a6a6;
-  --line: #464646;
-  --control: #2c2c2c;
-  --control-active: #eeeeee;
-  --control-active-ink: #181818;
-  --link: #b8d5ff;
-  --selection: #36577e;
+  --canvas: #111110;
+  --surface: #1b1b1a;
+  --ink: #f4f4f1;
+  --secondary: #c7c7c2;
+  --faint: #9d9d97;
+  --line: #3e3e3a;
+  --control: #292927;
+  --control-active: #f4f4f1;
+  --control-active-ink: #111110;
+  --link: #d5d5d0;
+  --selection: #4a4a46;
   --selection-ink: #ffffff;
   --panel-shadow: rgba(0, 0, 0, 0.45);
-  --accent: #eeeeee;
-  --accent-heading: #eeeeee;
-  --accent-ink: #181818;
+  --accent: #e7e7e2;
+  --accent-heading: #e7e7e2;
+  --accent-ink: #111110;
 }
 
 :root[data-theme="claude"][data-resolved-mode="dark"] {
@@ -409,7 +404,31 @@ a:focus-visible,
 
 .settings {
   position: relative;
+  display: flex;
+  width: 42px;
+  align-items: flex-end;
+  flex-direction: column;
   font-size: 14.5px;
+  isolation: isolate;
+}
+
+.settings[data-open="true"] {
+  width: 266px;
+  max-width: calc(100vw - 3rem);
+}
+
+.settings[data-open="true"]::before {
+  position: absolute;
+  z-index: 0;
+  inset: -0.75rem -0.75rem -0.5rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
+  border-top: 4px solid var(--accent);
+  border-radius: var(--shape-radius);
+  background: color-mix(in srgb, var(--canvas) 96%, transparent);
+  box-shadow: 0 14px 40px var(--panel-shadow);
+  content: "";
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
 }
 
 .settings-toggle,
@@ -427,6 +446,17 @@ a:focus-visible,
   place-items: center;
   backdrop-filter: blur(8px);
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.settings-toggle {
+  position: relative;
+  z-index: 1;
+  order: 2;
+  flex: 0 0 auto;
+}
+
+.settings[data-open="true"] .settings-toggle {
+  margin-top: 0.75rem;
 }
 
 .settings-toggle:hover,
@@ -450,29 +480,19 @@ a:focus-visible,
 
 .settings-panel {
   position: absolute;
+  z-index: 1;
+  order: 1;
   right: 0;
   bottom: calc(100% + 0.55rem);
-  width: 290px;
-  padding: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
-  border-top: 4px solid var(--accent);
-  border-radius: var(--shape-radius);
-  background: var(--canvas);
-  box-shadow: 0 14px 40px var(--panel-shadow);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
   opacity: 0;
   pointer-events: none;
   transform: translateY(5px);
   visibility: hidden;
   transition: opacity 120ms ease, transform 120ms ease, visibility 120ms;
-}
-
-.settings[data-open="true"]::after {
-  position: absolute;
-  right: 0;
-  bottom: 100%;
-  width: 100%;
-  height: 0.6rem;
-  content: "";
 }
 
 .back-to-top {
@@ -493,6 +513,7 @@ a:focus-visible,
 }
 
 .settings[data-open="true"] .settings-panel {
+  position: static;
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -562,14 +583,13 @@ a:focus-visible,
   stroke-linejoin: round;
 }
 
-.theme-logo--paper {
-  fill: var(--canvas);
+.theme-logo--openai {
   stroke: currentColor;
-  stroke-width: 1.5;
+  stroke-width: 1.45;
 }
 
-.theme-logo--paper path + path {
-  fill: none;
+.theme-option[aria-pressed="true"] .theme-logo--openai {
+  stroke: currentColor;
 }
 
 .theme-logo--claude {
@@ -1116,7 +1136,19 @@ footer {
   border-width: 2px;
 }
 
-:root[data-theme="twitch"] :is(.swap-media, .education-logo, .settings-panel) {
+:root[data-theme="twitch"] :is(.swap-media, .education-logo) {
+  border-radius: 0;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+
+:root[data-theme="twitch"] .settings[data-open="true"]::before {
   border-radius: 0;
   clip-path: polygon(
     0 0,
@@ -1147,8 +1179,9 @@ footer {
     bottom: 0.75rem;
   }
 
-  .settings-panel {
-    width: min(290px, calc(100vw - 1.5rem));
+  .settings[data-open="true"] {
+    width: min(266px, calc(100vw - 3rem));
+    max-width: calc(100vw - 3rem);
   }
 
   .profile-header {

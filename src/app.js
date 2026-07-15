@@ -87,10 +87,13 @@ const projectsSectionIcon = `
   </svg>
 `;
 
-const paperTheme = `
-  <svg class="theme-logo theme-logo--paper" aria-hidden="true" viewBox="0 0 24 24">
-    <path d="M6 3.5h9l3 3v14H6Z" />
-    <path d="M15 3.5v3h3" />
+const openaiTheme = `
+  <svg class="theme-logo theme-logo--openai" aria-hidden="true" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 3v6M12 15v6M4.2 7.5l5.2 3M14.6 13.5l5.2 3M4.2 16.5l5.2-3M14.6 10.5l5.2-3" />
+    <circle cx="12" cy="3" r="1.2" /><circle cx="12" cy="21" r="1.2" />
+    <circle cx="4.2" cy="7.5" r="1.2" /><circle cx="19.8" cy="16.5" r="1.2" />
+    <circle cx="4.2" cy="16.5" r="1.2" /><circle cx="19.8" cy="7.5" r="1.2" />
   </svg>
 `;
 
@@ -155,7 +158,7 @@ const darkMode = `
 `;
 
 const themeOptions = [
-  { value: "white", icon: paperTheme },
+  { value: "white", icon: openaiTheme },
   { value: "claude", icon: claudeTheme },
   { value: "linkedin", icon: linkedinTheme },
   { value: "spotify", icon: spotifyTheme },
@@ -461,7 +464,7 @@ const applyAppearance = () => {
   root.dataset.resolvedMode = activeMode;
   themeColor.content = {
     "white-light": "#ffffff",
-    "white-dark": "#161616",
+    "white-dark": "#111110",
     "claude-light": "#f1eadf",
     "claude-dark": "#25211e",
     "linkedin-light": "#f3f7fb",

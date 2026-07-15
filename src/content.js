@@ -253,7 +253,7 @@ export const content = {
     mode: { en: "Appearance", zh: "明暗模式" },
     settings: { en: "Display settings", zh: "显示设置" },
     closeSettings: { en: "Close settings", zh: "关闭设置" },
-    white: { en: "White", zh: "纯白" },
+    white: { en: "OpenAI White", zh: "OpenAI 白" },
     claude: { en: "Claude", zh: "Claude" },
     linkedin: { en: "LinkedIn blue", zh: "LinkedIn 蓝" },
     spotify: { en: "Spotify green", zh: "Spotify 绿" },
