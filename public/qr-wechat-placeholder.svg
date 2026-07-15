@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">WeChat QR code placeholder</title>
+  <desc id="desc">A deliberately non-scannable placeholder image that must be replaced.</desc>
+  <rect width="160" height="160" fill="#f4f4f0"/>
+  <g fill="none" stroke="#242421" stroke-width="5">
+    <path d="M18 48V18h30M112 18h30v30M142 112v30h-30M48 142H18v-30"/>
+    <path d="M43 67c0-17 16-30 36-30s36 13 36 30-16 30-36 30c-5 0-10-1-14-3l-15 7 4-14c-7-5-11-12-11-20Z"/>
+    <path d="M75 88c0-12 12-22 27-22s27 10 27 22-12 22-27 22c-4 0-8-1-11-2l-11 5 3-10c-5-4-8-9-8-15Z"/>
+    <path d="m28 28 104 104" stroke="#c54a3a" stroke-width="9"/>
+  </g>
+  <rect x="18" y="116" width="124" height="24" rx="3" fill="#242421"/>
+  <text x="80" y="132" fill="#fff" font-family="sans-serif" font-size="10" text-anchor="middle">WECHAT PLACEHOLDER</text>
+</svg>

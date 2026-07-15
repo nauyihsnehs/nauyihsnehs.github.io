@@ -664,11 +664,12 @@ a:focus-visible,
 
 .profile-header {
   position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 160px minmax(0, 1fr);
   gap: 2rem;
   align-items: start;
-  overflow: hidden;
+  overflow: visible;
   padding: 2rem 1.5rem 2.25rem;
   border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
   border-radius: var(--shape-radius);
@@ -680,6 +681,7 @@ a:focus-visible,
   position: absolute;
   z-index: 0;
   inset: 0;
+  border-radius: inherit;
   background: var(--theme-banner);
   content: "";
   opacity: 0.16;
@@ -749,6 +751,12 @@ a:focus-visible,
   cursor: default;
 }
 
+.swap-media[data-failed="true"] .media-alternate {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+
 .swap-media[data-failed="true"]::after {
   display: none;
 }
@@ -777,11 +785,23 @@ p {
 }
 
 h1 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 0.28em;
   margin: -0.15rem 0 0.1rem;
   font-size: 46px;
   font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.015em;
+}
+
+.profile-name-alternate {
+  color: var(--secondary);
+  font-size: 0.52em;
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .profile-role {
@@ -797,14 +817,30 @@ h1 {
   margin: 0;
 }
 
-.profile-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.1rem;
+.profile-contacts {
+  position: relative;
+  display: grid;
+  gap: 0.45rem;
   margin-top: 1rem;
 }
 
-.text-link,
+.profile-email-row,
+.profile-icon-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.profile-email-row {
+  gap: 0.35rem 1.1rem;
+}
+
+.profile-icon-row {
+  flex-wrap: nowrap;
+  gap: 0.3rem;
+}
+
+.profile-email-link,
 .publication-links a,
 .publication-links > span,
 .project-links a,
@@ -814,11 +850,140 @@ h1 {
   gap: 0.22rem;
 }
 
-.text-link {
-  font-size: 15px;
+.profile-email-link {
+  min-width: 0;
+  color: var(--secondary);
+  font-size: 14.5px;
+  text-decoration-color: color-mix(in srgb, currentColor 48%, transparent);
 }
 
-.text-link svg,
+.profile-email-link:hover,
+.profile-email-link:focus-visible {
+  color: var(--accent-heading);
+}
+
+.profile-email-link span {
+  overflow-wrap: anywhere;
+}
+
+.contact-icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  background: currentColor;
+  -webkit-mask: var(--contact-icon) center / contain no-repeat;
+  mask: var(--contact-icon) center / contain no-repeat;
+}
+
+.profile-email-link .contact-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.profile-icon-link {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--shape-radius) * 0.65);
+  background: transparent;
+  color: var(--secondary);
+  font: inherit;
+  cursor: pointer;
+  place-items: center;
+  text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.profile-icon-link:hover,
+.profile-icon-link:focus-visible,
+.profile-icon-link[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: var(--accent-soft);
+  color: var(--accent-heading);
+  text-decoration: none;
+}
+
+.profile-icon-link--empty {
+  color: var(--faint);
+  cursor: help;
+  opacity: 0.72;
+}
+
+.profile-icon-link--empty:hover {
+  border-color: transparent;
+  background: transparent;
+  color: var(--faint);
+}
+
+.profile-contact-popover {
+  position: absolute;
+  z-index: 8;
+  top: calc(100% + 0.55rem);
+  left: 0;
+  display: grid;
+  width: 190px;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--line));
+  border-top: 3px solid var(--accent);
+  border-radius: var(--shape-radius);
+  background: var(--canvas);
+  box-shadow: 0 14px 36px var(--panel-shadow);
+  color: var(--ink);
+}
+
+.profile-contact-popover strong {
+  padding-right: 1.4rem;
+  color: var(--accent-heading);
+  font-family: "Libertinus Serif", "Songti SC", "STSong", serif;
+  font-size: 17px;
+}
+
+.profile-contact-popover img {
+  display: block;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  background: #f4f4f0;
+}
+
+.contact-account {
+  max-width: 100%;
+  color: var(--secondary);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.contact-popover-close {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--secondary);
+  font: inherit;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+  place-items: center;
+}
+
+.contact-popover-close:hover {
+  background: var(--accent-soft);
+  color: var(--accent-heading);
+}
+
 .publication-links svg,
 .project-links svg {
   width: 0.72rem;
@@ -827,7 +992,6 @@ h1 {
   stroke-linecap: round;
 }
 
-.text-link--empty,
 .publication-links > span,
 .project-links > span {
   color: var(--faint);
@@ -1126,7 +1290,7 @@ footer {
   background: var(--accent-soft);
 }
 
-:root[data-theme="spotify"] .profile-links .text-link {
+:root[data-theme="spotify"] .profile-email-link {
   padding: 0.05rem 0.45rem;
   border-radius: 999px;
   background: var(--accent-soft);
@@ -1149,6 +1313,18 @@ footer {
 }
 
 :root[data-theme="twitch"] .settings[data-open="true"]::before {
+  border-radius: 0;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+}
+
+:root[data-theme="twitch"] .profile-contact-popover {
   border-radius: 0;
   clip-path: polygon(
     0 0,
@@ -1214,8 +1390,18 @@ footer {
     margin-top: 0.25rem;
   }
 
-  .profile-links {
+  .profile-contacts {
     margin-top: 0.75rem;
+  }
+
+  .profile-email-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .profile-contact-popover {
+    width: min(190px, calc(100vw - 3.5rem));
   }
 
   .content-section {
@@ -1272,6 +1458,25 @@ footer {
 
   h1 {
     font-size: 33px;
+  }
+
+  .profile-contacts {
+    clear: both;
+  }
+
+  .profile-icon-row {
+    gap: 2px;
+  }
+
+  .profile-icon-link {
+    width: 30px;
+    height: 30px;
+    padding: 4px;
+  }
+
+  .profile-icon-link .contact-icon {
+    width: 21px;
+    height: 21px;
   }
 
   .settings-row {

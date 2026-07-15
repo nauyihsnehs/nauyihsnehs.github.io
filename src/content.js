@@ -29,11 +29,51 @@ export const content = {
       },
     },
   },
-  links: [
-    { label: "Email", href: "" },
-    { label: "Google Scholar", href: "" },
-    { label: "ORCID", href: "" },
-    { label: "GitHub", href: "" },
+  emails: [
+    { type: "education", address: "your.name@university.edu" },
+    { type: "personal", address: "your.name@example.com" },
+  ],
+  academicLinks: [
+    { platform: "scholar", label: "Google Scholar", href: "" },
+    { platform: "orcid", label: "ORCID", href: "" },
+    { platform: "github", label: "GitHub", href: "" },
+    { platform: "researchgate", label: "ResearchGate", href: "" },
+  ],
+  socialLinks: [
+    {
+      platform: "qq",
+      label: "QQ",
+      href: "",
+      qr: "./qr-qq-placeholder.svg",
+      account: "000000000",
+      qrAlt: {
+        en: "Non-scannable placeholder for a QQ QR code",
+        zh: "不可扫描的 QQ 二维码占位图",
+      },
+    },
+    {
+      platform: "wechat",
+      label: "WeChat",
+      href: "",
+      qr: "./qr-wechat-placeholder.svg",
+      account: "your-wechat-id",
+      qrAlt: {
+        en: "Non-scannable placeholder for a WeChat QR code",
+        zh: "不可扫描的微信二维码占位图",
+      },
+    },
+    { platform: "x", label: "X", href: "", qr: "", account: "" },
+    {
+      platform: "telegram",
+      label: "Telegram",
+      href: "",
+      qr: "./qr-telegram-placeholder.svg",
+      account: "@your-telegram-account",
+      qrAlt: {
+        en: "Non-scannable placeholder for a Telegram QR code",
+        zh: "不可扫描的 Telegram 二维码占位图",
+      },
+    },
   ],
   education: [
     {
@@ -246,6 +286,12 @@ export const content = {
   labels: {
     skip: { en: "Skip to content", zh: "跳到主要内容" },
     personalLinks: { en: "Personal links", zh: "个人链接" },
+    emails: { en: "Email addresses", zh: "邮箱" },
+    educationEmail: { en: "Education email", zh: "教育邮箱" },
+    personalEmail: { en: "Personal email", zh: "个人邮箱" },
+    academicLinks: { en: "Academic profiles", zh: "学术主页" },
+    socialLinks: { en: "Social media", zh: "社交媒体" },
+    closeContact: { en: "Close contact card", zh: "关闭联系方式" },
     publicationLinks: { en: "Publication links", zh: "论文链接" },
     projectLinks: { en: "Project links", zh: "项目链接" },
     language: { en: "Language", zh: "语言" },

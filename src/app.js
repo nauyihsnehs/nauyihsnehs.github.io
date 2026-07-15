@@ -37,6 +37,10 @@ let mode = ["auto", "light", "dark"].includes(savedMode) ? savedMode : "auto";
 let settingsOpen = false;
 let settingsPinned = false;
 let backToTopVisible = false;
+let activeContact = null;
+let contactTrigger = null;
+const motionUnloadTimers = new WeakMap();
+const motionUnloadDelay = 180;
 
 const buildTime = new Date(import.meta.env.VITE_BUILD_TIME);
 
@@ -86,6 +90,22 @@ const projectsSectionIcon = `
     <path d="M7 12h4c3 0 3-6 6-6M11 12c3 0 3 6 6 6" />
   </svg>
 `;
+
+const contactIcons = {
+  educationEmail: "./icons/maildotru.svg",
+  personalEmail: "./icons/gmail.svg",
+  scholar: "./icons/googlescholar.svg",
+  orcid: "./icons/orcid.svg",
+  github: "./icons/github.svg",
+  researchgate: "./icons/researchgate.svg",
+  qq: "./icons/qq.svg",
+  wechat: "./icons/wechat.svg",
+  x: "./icons/x.svg",
+  telegram: "./icons/telegram.svg",
+};
+
+const renderContactIcon = (platform) =>
+  `<span class="contact-icon" aria-hidden="true" style="--contact-icon: url('${contactIcons[platform]}')"></span>`;
 
 const openaiTheme = `
   <svg class="theme-logo theme-logo--openai" aria-hidden="true" viewBox="0 0 24 24">
@@ -173,15 +193,82 @@ const modeOptions = [
   { value: "dark", icon: darkMode },
 ];
 
-const renderProfileLinks = () =>
-  content.links
-    .map(
-      ({ label, href }) =>
-        href
-          ? `<a class="text-link" href="${href}" target="_blank" rel="noreferrer">${label}${arrow}</a>`
-          : `<span class="text-link text-link--empty" title="${pick(content.labels.replaceLink)}">${label}<span aria-hidden="true">＋</span></span>`,
-    )
+const renderProfileName = () => {
+  const primary = pick(content.profile.name);
+  const alternateLanguage = language === "zh" ? "en" : "zh";
+  const alternate = content.profile.name[alternateLanguage];
+  const alternateName =
+    alternate && alternate !== primary
+      ? `<span class="profile-name-alternate" lang="${alternateLanguage === "zh" ? "zh-CN" : "en"}">${language === "zh" ? `（${alternate}）` : `(${alternate})`}</span>`
+      : "";
+
+  return `<h1><span>${primary}</span>${alternateName}</h1>`;
+};
+
+const renderEmailLinks = () =>
+  content.emails
+    .map(({ type, address }) => {
+      const label = pick(content.labels[`${type}Email`]);
+      return `
+        <a class="profile-email-link" href="mailto:${address}" aria-label="${label}: ${address}" title="${label}">
+          ${renderContactIcon(`${type}Email`)}
+          <span>${address}</span>
+        </a>
+      `;
+    })
     .join("");
+
+const renderExternalIcon = ({ platform, label, href }) =>
+  href
+    ? `<a class="profile-icon-link" data-platform="${platform}" href="${href}" target="_blank" rel="noreferrer" aria-label="${label}" title="${label}">${renderContactIcon(platform)}</a>`
+    : `<span class="profile-icon-link profile-icon-link--empty" data-platform="${platform}" role="img" aria-label="${label}" title="${label}: ${pick(content.labels.replaceLink)}">${renderContactIcon(platform)}</span>`;
+
+const renderSocialIcon = (item) => {
+  if (item.qr) {
+    return `
+      <button
+        class="profile-icon-link"
+        type="button"
+        data-platform="${item.platform}"
+        data-qr-contact="${item.platform}"
+        aria-label="${item.label}"
+        title="${item.label}"
+        aria-haspopup="dialog"
+        aria-controls="contact-popover"
+        aria-expanded="${activeContact === item.platform}"
+      >${renderContactIcon(item.platform)}</button>
+    `;
+  }
+
+  return renderExternalIcon(item);
+};
+
+const renderContactPopover = () => {
+  const contact = content.socialLinks.find(({ platform }) => platform === activeContact);
+  if (!contact) return "";
+
+  return `
+    <div class="profile-contact-popover" id="contact-popover" data-contact-popover role="dialog" aria-modal="false" aria-labelledby="contact-popover-title">
+      <button class="contact-popover-close" type="button" data-contact-close aria-label="${pick(content.labels.closeContact)}" title="${pick(content.labels.closeContact)}">×</button>
+      <strong id="contact-popover-title">${contact.label}</strong>
+      <img src="${contact.qr}" alt="${pick(contact.qrAlt)}" width="160" height="160" loading="lazy" />
+      <span class="contact-account">${contact.account}</span>
+    </div>
+  `;
+};
+
+const renderProfileContacts = () => `
+  <div class="profile-contacts" data-contact-area aria-label="${pick(content.labels.personalLinks)}">
+    <div class="profile-email-row" role="group" aria-label="${pick(content.labels.emails)}">
+      ${renderEmailLinks()}
+    </div>
+    <div class="profile-icon-row" role="group" aria-label="${pick(content.labels.personalLinks)}">
+      ${content.academicLinks.map(renderExternalIcon).join("")}
+      ${content.socialLinks.map(renderSocialIcon).join("")}
+    </div>
+    ${renderContactPopover()}
+  </div>
+`;
 
 const renderLinks = (links) =>
   links
@@ -493,12 +580,10 @@ const render = () => {
       <header class="profile-header">
         ${renderPortrait()}
         <div class="profile-copy">
-          <h1>${pick(content.profile.name)}</h1>
+          ${renderProfileName()}
           <p class="profile-role">${pick(content.profile.role)}</p>
           <p class="profile-introduction">${pick(content.profile.introduction)}</p>
-          <div class="profile-links" aria-label="${pick(content.labels.personalLinks)}">
-            ${renderProfileLinks()}
-          </div>
+          ${renderProfileContacts()}
         </div>
       </header>
 
@@ -542,6 +627,38 @@ const updateSettings = (open) => {
   );
 };
 
+const closeContact = (restoreFocus = false) => {
+  if (!activeContact) return;
+
+  const trigger = contactTrigger;
+  activeContact = null;
+  contactTrigger = null;
+  app.querySelector("[data-contact-popover]")?.remove();
+  app
+    .querySelectorAll("[data-qr-contact]")
+    .forEach((button) => button.setAttribute("aria-expanded", "false"));
+  restoreFocus && trigger?.focus();
+};
+
+const toggleContact = (platform, trigger) => {
+  if (activeContact === platform) {
+    closeContact(false);
+    return;
+  }
+
+  activeContact = platform;
+  contactTrigger = trigger;
+  const contactArea = app.querySelector("[data-contact-area]");
+  contactArea?.querySelector("[data-contact-popover]")?.remove();
+  contactArea?.insertAdjacentHTML("beforeend", renderContactPopover());
+  app.querySelectorAll("[data-qr-contact]").forEach((button) =>
+    button.setAttribute(
+      "aria-expanded",
+      String(button.dataset.qrContact === activeContact),
+    ),
+  );
+};
+
 const updateBackToTop = () => {
   const visible = window.scrollY > window.innerHeight * 0.75;
   if (visible === backToTopVisible) return;
@@ -554,8 +671,11 @@ const updateBackToTop = () => {
 const loadMotion = (media) => {
   const image = media.querySelector("[data-motion-image]");
   const video = media.querySelector("[data-motion-video]");
+  const pendingUnload = motionUnloadTimers.get(media);
 
-  image && !image.getAttribute("src") && image.setAttribute("src", image.dataset.src);
+  pendingUnload && window.clearTimeout(pendingUnload);
+  motionUnloadTimers.delete(media);
+  image && image.setAttribute("src", image.dataset.src);
   if (video && !video.getAttribute("src")) {
     video.src = video.dataset.src;
     video.load();
@@ -566,8 +686,18 @@ const loadMotion = (media) => {
 const stopMotion = (media) => {
   const image = media.querySelector("[data-motion-image]");
   const video = media.querySelector("[data-motion-video]");
+  const pendingUnload = motionUnloadTimers.get(media);
 
-  image?.removeAttribute("src");
+  pendingUnload && window.clearTimeout(pendingUnload);
+  motionUnloadTimers.delete(media);
+  if (image?.getAttribute("src")) {
+    const timer = window.setTimeout(() => {
+      if (media.dataset.active === "true") return;
+      image.removeAttribute("src");
+      motionUnloadTimers.delete(media);
+    }, motionUnloadDelay);
+    motionUnloadTimers.set(media, timer);
+  }
   if (video) {
     video.pause();
     video.currentTime = 0;
@@ -604,6 +734,8 @@ const toggleMedia = (media) => {
 
 app.addEventListener("click", (event) => {
   const settingsToggle = event.target.closest("[data-settings-toggle]");
+  const contactButton = event.target.closest("[data-qr-contact]");
+  const contactClose = event.target.closest("[data-contact-close]");
   const languageButton = event.target.closest("[data-language]");
   const themeButton = event.target.closest("[data-theme]");
   const modeButtonElement = event.target.closest("[data-mode]");
@@ -616,6 +748,16 @@ app.addEventListener("click", (event) => {
     return;
   }
 
+  if (contactClose) {
+    closeContact(true);
+    return;
+  }
+
+  if (contactButton) {
+    toggleContact(contactButton.dataset.qrContact, contactButton);
+    return;
+  }
+
   if (media) toggleMedia(media);
 
   language = languageButton?.dataset.language ?? language;
@@ -625,7 +767,10 @@ app.addEventListener("click", (event) => {
   languageButton && localStorage.setItem("academic-language", language);
   themeButton && localStorage.setItem("academic-theme", theme);
   modeButtonElement && localStorage.setItem("academic-color-mode", mode);
-  (languageButton || themeButton || modeButtonElement) && render();
+  if (languageButton || themeButton || modeButtonElement) {
+    closeContact(false);
+    render();
+  }
 });
 
 app.addEventListener("pointerover", (event) => {
@@ -687,9 +832,16 @@ app.addEventListener(
   (event) => {
     const media = event.target.closest("[data-swap-media]");
     if (!media || event.target.classList.contains("media-primary")) return;
+    const pendingUnload = motionUnloadTimers.get(media);
+    pendingUnload && window.clearTimeout(pendingUnload);
+    motionUnloadTimers.delete(media);
     media.dataset.failed = "true";
     media.dataset.pinned = "false";
     setMediaActive(media, false);
+    const scheduledUnload = motionUnloadTimers.get(media);
+    scheduledUnload && window.clearTimeout(scheduledUnload);
+    motionUnloadTimers.delete(media);
+    event.target.removeAttribute("src");
   },
   true,
 );
@@ -702,16 +854,23 @@ document.addEventListener("click", (event) => {
     settingsPinned = false;
     updateSettings(false);
   }
+  if (activeContact && !event.target.closest("[data-contact-area]")) {
+    closeContact(true);
+  }
   if (!event.target.closest("[data-swap-media]")) resetMedia();
 });
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
+  const restoreContactFocus = activeContact;
   const restoreSettingsFocus = settingsOpen;
+  closeContact(Boolean(restoreContactFocus));
   settingsPinned = false;
   updateSettings(false);
   resetMedia();
-  restoreSettingsFocus && app.querySelector("[data-settings-toggle]")?.focus();
+  !restoreContactFocus &&
+    restoreSettingsFocus &&
+    app.querySelector("[data-settings-toggle]")?.focus();
 });
 
 systemMode.addEventListener("change", () => mode === "auto" && applyAppearance());

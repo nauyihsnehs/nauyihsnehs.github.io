@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">QQ QR code placeholder</title>
+  <desc id="desc">A deliberately non-scannable placeholder image that must be replaced.</desc>
+  <rect width="160" height="160" fill="#f4f4f0"/>
+  <g fill="none" stroke="#242421" stroke-width="5">
+    <path d="M18 48V18h30M112 18h30v30M142 112v30h-30M48 142H18v-30"/>
+    <circle cx="80" cy="70" r="27"/>
+    <path d="M62 105c10 8 26 8 36 0M67 63h1M92 63h1" stroke-linecap="round"/>
+    <path d="m28 28 104 104" stroke="#c54a3a" stroke-width="9"/>
+  </g>
+  <rect x="25" y="116" width="110" height="24" rx="3" fill="#242421"/>
+  <text x="80" y="132" fill="#fff" font-family="sans-serif" font-size="11" text-anchor="middle">QQ PLACEHOLDER</text>
+</svg>
