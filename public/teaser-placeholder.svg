@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" role="img" aria-labelledby="title desc">
+  <title id="title">Publication teaser placeholder</title>
+  <desc id="desc">A static abstract research diagram.</desc>
+  <rect width="720" height="440" fill="#e9ece8"/>
+  <g stroke="#b7beb9" stroke-width="1">
+    <path d="M0 88h720M0 176h720M0 264h720M0 352h720"/>
+    <path d="M144 0v440M288 0v440M432 0v440M576 0v440"/>
+  </g>
+  <path d="M73 322c80-8 112-102 189-108 81-6 99 79 177 63 82-17 97-127 203-146" fill="none" stroke="#345e53" stroke-width="11" stroke-linecap="round"/>
+  <g fill="#c86f50" stroke="#fff" stroke-width="6">
+    <circle cx="73" cy="322" r="18"/>
+    <circle cx="262" cy="214" r="18"/>
+    <circle cx="439" cy="277" r="18"/>
+    <circle cx="642" cy="131" r="18"/>
+  </g>
+  <text x="40" y="54" fill="#34413c" font-family="monospace" font-size="20" letter-spacing="3">RESEARCH TEASER / STATIC</text>
+</svg>
+

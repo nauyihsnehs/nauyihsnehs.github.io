@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Placeholder portrait</title>
+  <desc id="desc">An abstract geometric portrait to replace with a real photograph.</desc>
+  <rect width="800" height="1000" fill="#d9dcd4"/>
+  <path d="M0 0h800v284L0 604Z" fill="#f1f2ed"/>
+  <path d="M800 210v790H232Z" fill="#c5cac0"/>
+  <circle cx="422" cy="393" r="155" fill="#777f76"/>
+  <path d="M178 1000c19-257 82-414 244-414 159 0 225 157 245 414Z" fill="#596159"/>
+  <path d="M430 238c-94 0-163 58-163 164 0 61 28 113 75 142-16-45-9-83 20-113 28-29 45-69 50-119 57 67 118 104 173 113-10-116-65-187-155-187Z" fill="#303630"/>
+  <path d="M333 495c25 35 55 52 91 52 37 0 68-17 94-52-17 60-49 90-96 90-44 0-74-30-89-90Z" fill="#d9dcd4" opacity=".9"/>
+  <g fill="#303630">
+    <circle cx="359" cy="423" r="9"/>
+    <circle cx="485" cy="423" r="9"/>
+  </g>
+  <path d="M376 485c31 18 62 18 94 0" fill="none" stroke="#303630" stroke-width="8" stroke-linecap="round"/>
+  <path d="M68 80h164M68 80v164M732 920H568M732 920V756" fill="none" stroke="#596159" stroke-width="2"/>
+  <text x="68" y="938" fill="#303630" font-family="Arial, sans-serif" font-size="22" letter-spacing="5">REPLACE WITH PORTRAIT</text>
+</svg>
+

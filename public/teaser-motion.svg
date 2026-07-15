@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" role="img" aria-labelledby="title desc">
+  <title id="title">Animated publication teaser placeholder</title>
+  <desc id="desc">An animated abstract research diagram with moving nodes.</desc>
+  <rect width="720" height="440" fill="#e9ece8"/>
+  <g stroke="#b7beb9" stroke-width="1">
+    <path d="M0 88h720M0 176h720M0 264h720M0 352h720"/>
+    <path d="M144 0v440M288 0v440M432 0v440M576 0v440"/>
+  </g>
+  <path id="trajectory" d="M73 322c80-8 112-102 189-108 81-6 99 79 177 63 82-17 97-127 203-146" fill="none" stroke="#345e53" stroke-width="11" stroke-linecap="round"/>
+  <circle r="20" fill="#c86f50" stroke="#fff" stroke-width="6">
+    <animateMotion dur="3.2s" repeatCount="indefinite" rotate="auto">
+      <mpath href="#trajectory"/>
+    </animateMotion>
+  </circle>
+  <g fill="#c86f50" opacity=".42">
+    <circle cx="73" cy="322" r="13"><animate attributeName="r" values="9;18;9" dur="2s" repeatCount="indefinite"/></circle>
+    <circle cx="439" cy="277" r="13"><animate attributeName="r" values="18;9;18" dur="2s" repeatCount="indefinite"/></circle>
+    <circle cx="642" cy="131" r="13"><animate attributeName="opacity" values=".25;.8;.25" dur="1.6s" repeatCount="indefinite"/></circle>
+  </g>
+  <text x="40" y="54" fill="#34413c" font-family="monospace" font-size="20" letter-spacing="3">RESEARCH TEASER / MOTION</text>
+</svg>
