@@ -809,6 +809,37 @@ const toggleMedia = (media) => {
   setMediaActive(media, pinned);
 };
 
+const restartMotion = (media) => {
+  const image = media.querySelector("[data-motion-image]");
+  const video = media.querySelector("[data-motion-video]");
+  const pendingUnload = motionUnloadTimers.get(media);
+
+  pendingUnload && window.clearTimeout(pendingUnload);
+  motionUnloadTimers.delete(media);
+  if (image) {
+    image.removeAttribute("src");
+    void image.offsetWidth;
+    image.setAttribute("src", image.dataset.src);
+  }
+  if (video) {
+    video.currentTime = 0;
+    void video.play().catch(() => undefined);
+  }
+};
+
+const replayMedia = (media) => {
+  resetMedia(media);
+  media.dataset.pinned = String(!hoverPointer.matches);
+  if (media.dataset.active !== "true") {
+    setMediaActive(media, true);
+    return;
+  }
+  restartMotion(media);
+};
+
+const activateMedia = (media) =>
+  media.dataset.motion === "true" ? replayMedia(media) : toggleMedia(media);
+
 const setResearchRevealed = (card, revealed) => {
   if (card.dataset.revealed === String(revealed)) return;
   card.dataset.revealed = String(revealed);
@@ -861,9 +892,9 @@ app.addEventListener("click", (event) => {
   const settingsToggle = event.target.closest("[data-settings-toggle]");
   const contactButton = event.target.closest("[data-qr-contact]");
   const contactClose = event.target.closest("[data-contact-close]");
-  const languageButton = event.target.closest("[data-language]");
-  const themeButton = event.target.closest("[data-theme]");
-  const modeButtonElement = event.target.closest("[data-mode]");
+  const languageButton = event.target.closest("button[data-language]");
+  const themeButton = event.target.closest("button.theme-option[data-theme]");
+  const modeButtonElement = event.target.closest("button.mode-option[data-mode]");
   const media = event.target.closest("[data-swap-media]");
   const researchCard = event.target.closest("[data-research-card]");
 
@@ -890,8 +921,7 @@ app.addEventListener("click", (event) => {
   }
 
   if (media) {
-    const clickEnabled = media.dataset.motion !== "true" || !hoverPointer.matches;
-    clickEnabled && toggleMedia(media);
+    activateMedia(media);
     return;
   }
 
@@ -994,7 +1024,7 @@ app.addEventListener("keydown", (event) => {
   }
   if (media && ["Enter", " "].includes(event.key)) {
     event.preventDefault();
-    toggleMedia(media);
+    activateMedia(media);
   }
 });
 
