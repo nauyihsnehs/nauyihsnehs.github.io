@@ -233,9 +233,10 @@ const formatEducationDate = (value) => {
     : `${monthNames[monthNumber - 1]} ${year}`;
 };
 
-const renderEducationDate = (value, position) => `
-  <div class="education-boundary education-boundary--${position}">
-    <time class="education-date" datetime="${value}">${formatEducationDate(value)}</time>
+const renderEducationDates = (startDate, endDate) => `
+  <div class="education-dates">
+    <time class="education-date" datetime="${startDate}">${formatEducationDate(startDate)}</time>
+    <time class="education-date" datetime="${endDate}">${formatEducationDate(endDate)}</time>
   </div>
 `;
 
@@ -264,7 +265,7 @@ const renderEducation = () =>
       const hasHighlights = Boolean(item.highlights?.length);
       return `
         <article class="education-item">
-          ${renderEducationDate(item.startDate, "start")}
+          ${renderEducationDates(item.startDate, item.endDate)}
           <div class="education-copy${hasHighlights ? "" : " education-copy--compact"}">
             ${renderEducationLogo(item)}
             <div class="education-text">
@@ -274,7 +275,6 @@ const renderEducation = () =>
             </div>
             ${renderEducationHighlights(item.highlights)}
           </div>
-          ${renderEducationDate(item.endDate, "end")}
         </article>
       `;
     })
