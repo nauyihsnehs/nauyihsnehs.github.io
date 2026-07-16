@@ -17,12 +17,22 @@ npm run build
 
 ## Replace the draft content
 
-1. Edit `src/content.js`. Each translated field has an `en` and `zh` value.
-2. Replace the two portrait files referenced by `profile.portrait.primary` and `profile.portrait.alternate`.
-3. Add each education logo through `education[].logo` and, optionally, link the institution with `institutionUrl`.
-4. Set each publication's `titleUrl`, author `href` values, and teaser poster. The optional teaser motion source accepts an image (`gif`, animated `webp`, or `svg`) or a muted `mp4`/`webm` video.
-5. Add real URLs to personal and publication links. Empty URLs remain visible as draft slots but are not clickable.
-6. Replace the title and description values before publishing.
+`src/content.js` is the single editing entry point for profile information,
+bilingual copy, links, SEO metadata, display defaults, and section order. Each
+translated field has an `en` and `zh` value. Section order follows the
+`sections` array; set a section or item `enabled` value to `false` to hide it.
+
+1. Edit the site, profile, and section records in `src/content.js`.
+2. Store custom media below `public/content/` and reference it with a path
+   relative to `public/`, such as `content/profile/portrait.svg`.
+3. Set publication and project links, author URLs, logos, and teaser media. A
+   teaser motion source accepts an image (`gif`, animated `webp`, or `svg`) or a
+   muted `mp4`/`webm` video.
+4. Add real URLs to contact and resource records. Empty URLs remain visible as
+   draft slots but are not clickable.
+5. Run `npm run content:check` before previewing or publishing. It validates the
+   bilingual structure, IDs, dates, links, supported display values, and every
+   referenced media file.
 
 The initial experience is English with the white theme. Appearance defaults to `Auto`, which follows the visitor's system light or dark setting. Manual language, theme, and appearance selections are stored in the browser independently.
 
@@ -67,12 +77,13 @@ normal production deployment must use the artifact produced by
 ### Files that an update may intentionally change
 
 - `src/content.js`: profile, bilingual copy, education, links, publications,
-  projects, and asset references.
+  projects, SEO, display defaults, section order, and asset references.
 - `src/app.js`: rendering and interaction behavior.
 - `src/styles.css`: layout, themes, responsive behavior, and visual states.
 - `index.html`: document metadata, the application mount point, and source
   entry links.
 - `public/`: portraits, logos, QR images, icons, and publication media.
+- `scripts/check-content.js`: the content contract and static validation rules.
 - `package.json` and `package-lock.json`: dependencies and scripts; update them
   together.
 - `vite.config.js`, `eslint.config.js`, and `.github/workflows/pages.yml`: build,
@@ -116,14 +127,17 @@ available, run the complete check:
 npm run check
 ```
 
-It runs ESLint and syntax checks for `src/app.js` and `src/content.js`. The
-minimum dependency-free checks for a documentation-only or constrained
+It runs ESLint, content validation, and syntax checks for the JavaScript source.
+The minimum dependency-free checks for a documentation-only or constrained
 environment are:
 
 ```bash
 git diff --check
+node scripts/check-content.js
 node --check src/app.js
 node --check src/content.js
+node --check scripts/check-content.js
+node --check vite.config.js
 ```
 
 Only run checks relevant to changed files. Do not install dependencies unless
@@ -261,9 +275,9 @@ did not finish rendering. Check these causes in order:
    directly. Keep stylesheet entry links and asset resolution compatible with
    the fallback path.
 5. **An asset path is wrong.** Source fallback assets live under `public/`, while
-   a Vite build copies those files to the artifact root. The asset helpers in
-   `src/app.js` and `src/content.js` handle this distinction and must remain in
-   sync.
+   a Vite build copies those files to the artifact root. Content stores paths
+   relative to `public/`; the single resolver in `src/app.js` handles both
+   locations. Run `npm run content:check` to find missing files.
 
 ### Required completion report
 

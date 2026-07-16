@@ -4,10 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "npm run content:check",
     "dev": "vite --host 127.0.0.1",
+    "prebuild": "npm run content:check",
     "build": "vite build",
     "lint": "eslint .",
-    "check": "npm run lint && node --check src/app.js && node --check src/content.js"
+    "content:check": "node scripts/check-content.js",
+    "check": "npm run lint && npm run content:check && node --check src/app.js && node --check src/content.js && node --check scripts/check-content.js && node --check vite.config.js"
   },
   "dependencies": {
     "@fontsource/libertinus-sans": "^5.2.1",

@@ -7,6 +7,10 @@ const root = document.documentElement;
 const app = document.querySelector("#app");
 const skipLink = document.querySelector("#skip-link");
 const description = document.querySelector('meta[name="description"]');
+const openGraphTitle = document.querySelector('meta[property="og:title"]');
+const openGraphDescription = document.querySelector(
+  'meta[property="og:description"]',
+);
 const themeColor = document.querySelector('meta[name="theme-color"]');
 const systemMode = window.matchMedia("(prefers-color-scheme: dark)");
 const hoverPointer = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -17,19 +21,17 @@ const selectableCard =
 const savedLanguage = localStorage.getItem("academic-language");
 const savedTheme = localStorage.getItem("academic-theme");
 const savedMode = localStorage.getItem("academic-color-mode");
-const themeNames = [
-  "white",
-  "claude",
-  "linkedin",
-  "spotify",
-  "youtube",
-  "twitch",
-  "bilibili",
-];
+const languageNames = content.display.languages.map(({ id }) => id);
+const themeNames = content.display.themes;
+const modeNames = content.display.modes;
 
-let language = ["en", "zh"].includes(savedLanguage) ? savedLanguage : "en";
-let theme = themeNames.includes(savedTheme) ? savedTheme : "white";
-let mode = ["auto", "light", "dark"].includes(savedMode) ? savedMode : "auto";
+let language = languageNames.includes(savedLanguage)
+  ? savedLanguage
+  : content.site.defaultLanguage;
+let theme = themeNames.includes(savedTheme)
+  ? savedTheme
+  : content.display.defaultTheme;
+let mode = modeNames.includes(savedMode) ? savedMode : content.display.defaultMode;
 let settingsOpen = false;
 let settingsPinned = false;
 let backToTopVisible = false;
@@ -43,6 +45,21 @@ const buildTime = new Date(document.lastModified);
 
 const pick = (value) =>
   typeof value === "string" ? value : (value[language] ?? value.en);
+
+const escapeHtml = (value) =>
+  String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+const text = (value) => escapeHtml(pick(value));
+const enabledItems = (items) => items.filter(({ enabled }) => enabled);
+const currentLanguage = () =>
+  content.display.languages.find(({ id }) => id === language);
+const contactSection = () =>
+  content.sections.find(({ id }) => id === "contact");
 
 const resolvedMode = () =>
   mode === "auto" ? (systemMode.matches ? "dark" : "light") : mode;
@@ -110,21 +127,8 @@ const resourcesSectionIcon = `
   </svg>
 `;
 
-const contactIcons = {
-  educationEmail: asset("icons/maildotru.svg"),
-  personalEmail: asset("icons/gmail.svg"),
-  scholar: asset("icons/googlescholar.svg"),
-  orcid: asset("icons/orcid.svg"),
-  github: asset("icons/github.svg"),
-  researchgate: asset("icons/researchgate.svg"),
-  qq: asset("icons/qq.svg"),
-  wechat: asset("icons/wechat.svg"),
-  x: asset("icons/x.svg"),
-  telegram: asset("icons/telegram.svg"),
-};
-
-const renderContactIcon = (platform) =>
-  `<span class="contact-icon" aria-hidden="true" style="--contact-icon: url('${contactIcons[platform]}')"></span>`;
+const renderContactIcon = (icon) =>
+  `<span class="contact-icon" aria-hidden="true" style="--contact-icon: url('${escapeHtml(asset(icon))}')"></span>`;
 
 const openaiTheme = `
   <svg class="theme-logo theme-logo--openai" aria-hidden="true" viewBox="0 0 24 24">
@@ -196,51 +200,64 @@ const darkMode = `
   </svg>
 `;
 
-const themeOptions = [
-  { value: "white", icon: openaiTheme },
-  { value: "claude", icon: claudeTheme },
-  { value: "linkedin", icon: linkedinTheme },
-  { value: "spotify", icon: spotifyTheme },
-  { value: "youtube", icon: youtubeTheme },
-  { value: "twitch", icon: twitchTheme },
-  { value: "bilibili", icon: bilibiliTheme },
-];
+const themeIcons = {
+  white: openaiTheme,
+  claude: claudeTheme,
+  linkedin: linkedinTheme,
+  spotify: spotifyTheme,
+  youtube: youtubeTheme,
+  twitch: twitchTheme,
+  bilibili: bilibiliTheme,
+};
 
-const modeOptions = [
-  { value: "auto", icon: autoMode },
-  { value: "light", icon: lightMode },
-  { value: "dark", icon: darkMode },
-];
+const modeIcons = {
+  auto: autoMode,
+  light: lightMode,
+  dark: darkMode,
+};
+
+const themeOptions = content.display.themes.map((value) => ({
+  value,
+  icon: themeIcons[value],
+}));
+
+const modeOptions = content.display.modes.map((value) => ({
+  value,
+  icon: modeIcons[value],
+}));
 
 const renderProfileName = () => {
   const primary = pick(content.profile.name);
   const alternateLanguage = language === "zh" ? "en" : "zh";
   const alternate = content.profile.name[alternateLanguage];
+  const alternateHtmlLanguage = content.display.languages.find(
+    ({ id }) => id === alternateLanguage,
+  ).htmlLang;
   const alternateName =
     alternate && alternate !== primary
-      ? `<span class="profile-name-alternate" lang="${alternateLanguage === "zh" ? "zh-CN" : "en"}">${language === "zh" ? `（${alternate}）` : `(${alternate})`}</span>`
+      ? `<span class="profile-name-alternate" lang="${alternateHtmlLanguage}">${language === "zh" ? `（${escapeHtml(alternate)}）` : `(${escapeHtml(alternate)})`}</span>`
       : "";
 
-  return `<h1><span>${primary}</span>${alternateName}</h1>`;
+  return `<h1><span>${escapeHtml(primary)}</span>${alternateName}</h1>`;
 };
 
-const renderEmailLinks = () =>
-  content.emails
-    .map(({ type, address }) => {
-      const label = pick(content.labels[`${type}Email`]);
+const renderEmailLinks = (emails) =>
+  enabledItems(emails)
+    .map(({ type, address, icon }) => {
+      const label = pick(content.ui[`${type}Email`]);
       return `
-        <a class="profile-email-link" href="mailto:${address}" aria-label="${label}: ${address}" title="${label}">
-          ${renderContactIcon(`${type}Email`)}
-          <span>${address}</span>
+        <a class="profile-email-link" href="mailto:${escapeHtml(address)}" aria-label="${escapeHtml(label)}: ${escapeHtml(address)}" title="${escapeHtml(label)}">
+          ${renderContactIcon(icon)}
+          <span>${escapeHtml(address)}</span>
         </a>
       `;
     })
     .join("");
 
-const renderExternalIcon = ({ platform, label, href }) =>
+const renderExternalIcon = ({ platform, label, href, icon }) =>
   href
-    ? `<a class="profile-icon-link" data-platform="${platform}" href="${href}" target="_blank" rel="noreferrer" aria-label="${label}" title="${label}">${renderContactIcon(platform)}</a>`
-    : `<span class="profile-icon-link profile-icon-link--empty" data-platform="${platform}" role="img" aria-label="${label}" title="${label}: ${pick(content.labels.replaceLink)}">${renderContactIcon(platform)}</span>`;
+    ? `<a class="profile-icon-link" data-platform="${platform}" href="${escapeHtml(href)}" target="_blank" rel="noreferrer" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${renderContactIcon(icon)}</a>`
+    : `<span class="profile-icon-link profile-icon-link--empty" data-platform="${platform}" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}: ${text(content.ui.replaceLink)}">${renderContactIcon(icon)}</span>`;
 
 const renderSocialIcon = (item) => {
   if (item.qr) {
@@ -251,12 +268,12 @@ const renderSocialIcon = (item) => {
           type="button"
           data-platform="${item.platform}"
           data-qr-contact="${item.platform}"
-          aria-label="${item.label}"
-          title="${item.label}"
+          aria-label="${escapeHtml(item.label)}"
+          title="${escapeHtml(item.label)}"
           aria-haspopup="dialog"
           aria-controls="contact-popover-${item.platform}"
           aria-expanded="${activeContact === item.platform}"
-        >${renderContactIcon(item.platform)}</button>
+        >${renderContactIcon(item.icon)}</button>
         ${activeContact === item.platform ? renderContactPopover(item.platform) : ""}
       </span>
     `;
@@ -266,40 +283,42 @@ const renderSocialIcon = (item) => {
 };
 
 const renderContactPopover = (platform = activeContact) => {
-  const contact = content.socialLinks.find((item) => item.platform === platform);
+  const contact = contactSection().socialLinks.find(
+    (item) => item.platform === platform,
+  );
   if (!contact) return "";
 
   return `
     <div class="profile-contact-popover" id="contact-popover-${contact.platform}" data-contact-popover role="dialog" aria-modal="false" aria-labelledby="contact-popover-title-${contact.platform}">
-      <button class="contact-popover-close" type="button" data-contact-close aria-label="${pick(content.labels.closeContact)}" title="${pick(content.labels.closeContact)}">×</button>
-      <strong id="contact-popover-title-${contact.platform}">${contact.label}</strong>
-      <img src="${contact.qr}" alt="${pick(contact.qrAlt)}" width="160" height="160" loading="lazy" />
-      <span class="contact-account">${contact.account}</span>
+      <button class="contact-popover-close" type="button" data-contact-close aria-label="${text(content.ui.closeContact)}" title="${text(content.ui.closeContact)}">×</button>
+      <strong id="contact-popover-title-${contact.platform}">${escapeHtml(contact.label)}</strong>
+      <img src="${escapeHtml(asset(contact.qr))}" alt="${text(contact.qrAlt)}" width="160" height="160" loading="lazy" />
+      <span class="contact-account">${escapeHtml(contact.account)}</span>
     </div>
   `;
 };
 
-const renderContacts = () => `
-  <div class="contact-panel" data-contact-area role="group" aria-label="${pick(content.labels.personalLinks)}">
-    <div class="profile-email-row" role="group" aria-label="${pick(content.labels.emails)}">
-      ${renderEmailLinks()}
+const renderContacts = (section) => `
+  <div class="contact-panel" data-contact-area role="group" aria-label="${text(content.ui.personalLinks)}">
+    <div class="profile-email-row" role="group" aria-label="${text(content.ui.emails)}">
+      ${renderEmailLinks(section.emails)}
     </div>
-    <div class="profile-icon-row" role="group" aria-label="${pick(content.labels.personalLinks)}">
-      ${content.academicLinks.map(renderExternalIcon).join("")}
-      ${content.socialLinks.map(renderSocialIcon).join("")}
+    <div class="profile-icon-row" role="group" aria-label="${text(content.ui.personalLinks)}">
+      ${enabledItems(section.academicLinks).map(renderExternalIcon).join("")}
+      ${enabledItems(section.socialLinks).map(renderSocialIcon).join("")}
     </div>
   </div>
 `;
 
-const renderResearchAreas = () =>
-  content.researchAreas
-    .map((area, index) => {
-      const areaId = `research-area-${index}`;
-      const pinned = activeResearchArea === String(index);
+const renderResearchAreas = (items) =>
+  enabledItems(items)
+    .map((area) => {
+      const areaId = `research-area-${area.id}`;
+      const pinned = activeResearchArea === area.id;
       return `
         <article
           class="research-card"
-          data-research-card="${index}"
+          data-research-card="${area.id}"
           data-pinned="${pinned}"
           data-revealed="${pinned}"
           role="button"
@@ -308,25 +327,25 @@ const renderResearchAreas = () =>
           aria-describedby="${areaId}-description"
         >
           <div class="research-visual">
-            <img src="${area.image.src}" alt="${pick(area.image.alt)}" loading="lazy" />
-            <p class="research-description" id="${areaId}-description">${pick(area.description)}</p>
+            <img src="${escapeHtml(asset(area.image.src))}" alt="${text(area.image.alt)}" loading="lazy" />
+            <p class="research-description" id="${areaId}-description">${text(area.description)}</p>
           </div>
-          <h3>${pick(area.title)}</h3>
-          <ul class="research-keywords" aria-label="${pick(area.title)}">
-            ${pick(area.keywords).map((keyword) => `<li>${keyword}</li>`).join("")}
+          <h3>${text(area.title)}</h3>
+          <ul class="research-keywords" aria-label="${text(area.title)}">
+            ${pick(area.keywords).map((keyword) => `<li>${escapeHtml(keyword)}</li>`).join("")}
           </ul>
         </article>
       `;
     })
     .join("");
 
-const renderResourceCategories = () =>
-  content.resourceCategories
+const renderResourceCategories = (items) =>
+  enabledItems(items)
     .map(({ title, href }) => {
-      const label = pick(title);
+      const label = text(title);
       return href
-        ? `<a class="resource-card" href="${href}" target="_blank" rel="noreferrer"><span>${label}</span>${arrow}</a>`
-        : `<span class="resource-card resource-card--empty" title="${pick(content.labels.replaceLink)}"><span>${label}</span><span aria-hidden="true">＋</span></span>`;
+        ? `<a class="resource-card" href="${escapeHtml(href)}" target="_blank" rel="noreferrer"><span>${label}</span>${arrow}</a>`
+        : `<span class="resource-card resource-card--empty" title="${text(content.ui.replaceLink)}"><span>${label}</span><span aria-hidden="true">＋</span></span>`;
     })
     .join("");
 
@@ -335,8 +354,8 @@ const renderLinks = (links) =>
     .map(
       ({ label, href }) =>
         href
-          ? `<a href="${href}" target="_blank" rel="noreferrer">${label}${arrow}</a>`
-          : `<span title="${pick(content.labels.replaceLink)}">${label}<span aria-hidden="true">＋</span></span>`,
+          ? `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}${arrow}</a>`
+          : `<span title="${text(content.ui.replaceLink)}">${escapeHtml(label)}<span aria-hidden="true">＋</span></span>`,
     )
     .join("");
 
@@ -344,32 +363,17 @@ const renderAuthors = (authors) =>
   authors
     .map(({ name, href }) =>
       href
-        ? `<a href="${href}" target="_blank" rel="noreferrer">${name}</a>`
-        : `<span>${name}</span>`,
+        ? `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(name)}</a>`
+        : `<span>${escapeHtml(name)}</span>`,
     )
     .join(", ");
 
 const renderEducationLogo = (item) => {
-  const logo = `<img src="${item.logo}" alt="${pick(item.logoAlt)}" loading="lazy" />`;
+  const logo = `<img src="${escapeHtml(asset(item.logo))}" alt="${text(item.logoAlt)}" loading="lazy" />`;
   return item.institutionUrl
-    ? `<a class="education-logo" href="${item.institutionUrl}" target="_blank" rel="noreferrer">${logo}</a>`
+    ? `<a class="education-logo" href="${escapeHtml(item.institutionUrl)}" target="_blank" rel="noreferrer">${logo}</a>`
     : `<span class="education-logo">${logo}</span>`;
 };
-
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
 
 const formatEducationDate = (value) => {
   const [year, month] = value.split("-");
@@ -378,15 +382,26 @@ const formatEducationDate = (value) => {
     return value;
   }
 
-  return language === "zh"
-    ? `${year}年${monthNumber}月`
-    : `${monthNames[monthNumber - 1]} ${year}`;
+  if (!/^\d{4}$/.test(year)) {
+    if (language === "zh") return `${year}年${monthNumber}月`;
+    const monthLabel = new Intl.DateTimeFormat(currentLanguage().locale, {
+      month: "short",
+      timeZone: "UTC",
+    }).format(new Date(`2000-${month}-01T00:00:00Z`));
+    return `${monthLabel} ${year}`;
+  }
+
+  return new Intl.DateTimeFormat(currentLanguage().locale, {
+    year: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  }).format(new Date(`${year}-${month}-01T00:00:00Z`));
 };
 
 const renderEducationDates = (startDate, endDate) => `
   <div class="education-dates">
-    <time class="education-date" datetime="${startDate}">${formatEducationDate(startDate)}</time>
-    <time class="education-date" datetime="${endDate}">${formatEducationDate(endDate)}</time>
+    <time class="education-date" datetime="${escapeHtml(startDate)}">${escapeHtml(formatEducationDate(startDate))}</time>
+    <time class="education-date" datetime="${escapeHtml(endDate)}">${escapeHtml(formatEducationDate(endDate))}</time>
   </div>
 `;
 
@@ -397,11 +412,11 @@ const renderEducationHighlights = (highlights) => {
     <ul class="education-highlights">
       ${highlights
         .map(({ text, href }) => {
-          const label = pick(text);
+          const label = text;
           return `<li>${
             href
-              ? `<a href="${href}" target="_blank" rel="noreferrer">${label}</a>`
-              : `<span>${label}</span>`
+              ? `<a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(pick(label))}</a>`
+              : `<span>${escapeHtml(pick(label))}</span>`
           }</li>`;
         })
         .join("")}
@@ -409,8 +424,8 @@ const renderEducationHighlights = (highlights) => {
   `;
 };
 
-const renderEducation = () =>
-  content.education
+const renderEducation = (items) =>
+  enabledItems(items)
     .map((item) => {
       const hasHighlights = Boolean(item.highlights?.length);
       return `
@@ -419,9 +434,9 @@ const renderEducation = () =>
           <div class="education-copy${hasHighlights ? "" : " education-copy--compact"}">
             ${renderEducationLogo(item)}
             <div class="education-text">
-              <h3>${pick(item.institution)}</h3>
-              <p>${pick(item.degree)}</p>
-              <p class="secondary">${pick(item.detail)}</p>
+              <h3>${text(item.institution)}</h3>
+              <p>${text(item.degree)}</p>
+              <p class="secondary">${text(item.detail)}</p>
             </div>
             ${renderEducationHighlights(item.highlights)}
           </div>
@@ -433,10 +448,11 @@ const renderEducation = () =>
 const renderMotionMedia = (teaser) => {
   const motion = teaser.motion;
   if (!motion?.src) return "";
+  const source = escapeHtml(asset(motion.src));
 
   return motion.type === "video"
-    ? `<video class="media-alternate" data-motion-video data-src="${motion.src}" muted loop playsinline preload="none" aria-hidden="true"></video>`
-    : `<img class="media-alternate" data-motion-image data-src="${motion.src}" alt="" aria-hidden="true" />`;
+    ? `<video class="media-alternate" data-motion-video data-src="${source}" muted loop playsinline preload="none" aria-hidden="true"></video>`
+    : `<img class="media-alternate" data-motion-image data-src="${source}" alt="" aria-hidden="true" />`;
 };
 
 const renderTeaser = (teaser, label) => `
@@ -446,32 +462,32 @@ const renderTeaser = (teaser, label) => `
     data-motion="true"
     role="button"
     tabindex="0"
-    aria-label="${pick(label)}"
+    aria-label="${text(label)}"
     aria-pressed="false"
   >
-    <img class="media-primary" src="${teaser.poster}" alt="${pick(teaser.alt)}" loading="lazy" />
+    <img class="media-primary" src="${escapeHtml(asset(teaser.poster))}" alt="${text(teaser.alt)}" loading="lazy" />
     ${renderMotionMedia(teaser)}
   </div>
 `;
 
 const renderPublicationTitle = (publication) => {
-  const title = pick(publication.title);
+  const title = text(publication.title);
   return publication.titleUrl
-    ? `<a href="${publication.titleUrl}" target="_blank" rel="noreferrer">${title}</a>`
+    ? `<a href="${escapeHtml(publication.titleUrl)}" target="_blank" rel="noreferrer">${title}</a>`
     : title;
 };
 
-const renderPublications = () =>
-  content.publications
+const renderPublications = (items) =>
+  enabledItems(items)
     .map(
       (publication) => `
         <article class="publication-item">
-          ${renderTeaser(publication.teaser, content.labels.showMotion)}
+          ${renderTeaser(publication.teaser, content.ui.showMotion)}
           <div class="publication-copy">
-            <p class="publication-meta">${publication.year} · ${pick(publication.venue)} · ${pick(publication.note)}</p>
+            <p class="publication-meta">${escapeHtml(publication.year)} · ${text(publication.venue)} · ${text(publication.note)}</p>
             <h3>${renderPublicationTitle(publication)}</h3>
             <p class="publication-authors">${renderAuthors(publication.authors)}</p>
-            <div class="publication-links" aria-label="${pick(content.labels.publicationLinks)}">
+            <div class="publication-links" aria-label="${text(content.ui.publicationLinks)}">
               ${renderLinks(publication.links)}
             </div>
           </div>
@@ -481,22 +497,22 @@ const renderPublications = () =>
     .join("");
 
 const renderProjectTitle = (project) => {
-  const title = pick(project.title);
+  const title = text(project.title);
   return project.titleUrl
-    ? `<a href="${project.titleUrl}" target="_blank" rel="noreferrer">${title}</a>`
+    ? `<a href="${escapeHtml(project.titleUrl)}" target="_blank" rel="noreferrer">${title}</a>`
     : title;
 };
 
-const renderProjects = () =>
-  content.projects
+const renderProjects = (items) =>
+  enabledItems(items)
     .map(
       (project) => `
         <article class="project-item">
-          ${renderTeaser(project.teaser, content.labels.showProjectMotion)}
+          ${renderTeaser(project.teaser, content.ui.showProjectMotion)}
           <div class="project-copy">
             <h3>${renderProjectTitle(project)}</h3>
-            <p class="project-description">${pick(project.description)}</p>
-            <div class="project-links" aria-label="${pick(content.labels.projectLinks)}">
+            <p class="project-description">${text(project.description)}</p>
+            <div class="project-links" aria-label="${text(content.ui.projectLinks)}">
               ${renderLinks(project.links)}
             </div>
           </div>
@@ -512,11 +528,11 @@ const renderPortrait = () => `
     data-motion="false"
     role="button"
     tabindex="0"
-    aria-label="${pick(content.labels.showAlternatePortrait)}"
+    aria-label="${text(content.ui.showAlternatePortrait)}"
     aria-pressed="false"
   >
-    <img class="media-primary" src="${content.profile.portrait.primary}" alt="${pick(content.profile.portrait.alt)}" />
-    <img class="media-alternate" src="${content.profile.portrait.alternate}" alt="" aria-hidden="true" />
+    <img class="media-primary" src="${escapeHtml(asset(content.profile.portrait.primary))}" alt="${text(content.profile.portrait.alt)}" />
+    <img class="media-alternate" src="${escapeHtml(asset(content.profile.portrait.alternate))}" alt="" aria-hidden="true" />
   </div>
 `;
 
@@ -525,8 +541,8 @@ const modeButton = (value, icon) => `
     class="mode-option"
     type="button"
     data-mode="${value}"
-    aria-label="${pick(content.labels[value])}"
-    title="${pick(content.labels[value])}"
+    aria-label="${text(content.ui[value])}"
+    title="${text(content.ui[value])}"
     aria-pressed="${mode === value}"
   >${icon}</button>
 `;
@@ -536,14 +552,14 @@ const themeButton = (value, icon) => `
     class="theme-option"
     type="button"
     data-theme="${value}"
-    aria-label="${pick(content.labels[value])}"
-    title="${pick(content.labels[value])}"
+    aria-label="${text(content.ui[value])}"
+    title="${text(content.ui[value])}"
     aria-pressed="${theme === value}"
   >${icon}</button>
 `;
 
 const formattedBuildTime = () =>
-  new Intl.DateTimeFormat(language === "zh" ? "zh-CN" : "en-GB", {
+  new Intl.DateTimeFormat(currentLanguage().locale, {
     year: "numeric",
     month: "short",
     day: "2-digit",
@@ -558,26 +574,30 @@ const renderSettings = () => `
       class="settings-toggle"
       type="button"
       data-settings-toggle
-      aria-label="${settingsOpen ? pick(content.labels.closeSettings) : pick(content.labels.settings)}"
+      aria-label="${settingsOpen ? text(content.ui.closeSettings) : text(content.ui.settings)}"
       aria-expanded="${settingsOpen}"
       aria-controls="settings-panel"
     >${gear}</button>
-    <div class="settings-panel" id="settings-panel" role="group" aria-label="${pick(content.labels.settings)}">
+    <div class="settings-panel" id="settings-panel" role="group" aria-label="${text(content.ui.settings)}">
       <div class="settings-row">
-        <span>${pick(content.labels.language)}</span>
+        <span>${text(content.ui.language)}</span>
         <div class="control-group">
-          <button type="button" data-language="en" aria-pressed="${language === "en"}">EN</button>
-          <button type="button" data-language="zh" aria-pressed="${language === "zh"}">中</button>
+          ${content.display.languages
+            .map(
+              ({ id, label }) =>
+                `<button type="button" data-language="${id}" aria-pressed="${language === id}">${escapeHtml(label)}</button>`,
+            )
+            .join("")}
         </div>
       </div>
       <div class="settings-row">
-        <span>${pick(content.labels.theme)}</span>
+        <span>${text(content.ui.theme)}</span>
         <div class="control-group theme-group">
           ${themeOptions.map(({ value, icon }) => themeButton(value, icon)).join("")}
         </div>
       </div>
       <div class="settings-row">
-        <span>${pick(content.labels.mode)}</span>
+        <span>${text(content.ui.mode)}</span>
         <div class="control-group mode-group">
           ${modeOptions.map(({ value, icon }) => modeButton(value, icon)).join("")}
         </div>
@@ -594,44 +614,74 @@ const renderFloatingTools = () => `
       data-back-to-top
       data-visible="${backToTopVisible}"
       href="#main"
-      aria-label="${pick(content.labels.backToTop)}"
-      title="${pick(content.labels.backToTop)}"
+      aria-label="${text(content.ui.backToTop)}"
+      title="${text(content.ui.backToTop)}"
     >${upArrow}</a>
   </div>
 `;
 
 const renderSectionTitle = (id, label, icon) => `
-  <h2 id="${id}">${icon}<span>${pick(label)}</span></h2>
+  <h2 id="${id}">${icon}<span>${text(label)}</span></h2>
 `;
+
+const sectionIcons = {
+  contact: contactSectionIcon,
+  research: researchSectionIcon,
+  publications: publicationsSectionIcon,
+  education: educationSectionIcon,
+  projects: projectsSectionIcon,
+  resources: resourcesSectionIcon,
+};
+
+const sectionClasses = {
+  contact: " contact-section",
+  research: " research-section",
+  resources: " resources-section",
+};
+
+const sectionBodies = {
+  contact: (section) => renderContacts(section),
+  research: (section) =>
+    `<div class="research-grid">${renderResearchAreas(section.items)}</div>`,
+  publications: (section) =>
+    `<div class="publication-list">${renderPublications(section.items)}</div>`,
+  education: (section) =>
+    `<div class="education-timeline">${renderEducation(section.items)}</div>`,
+  projects: (section) =>
+    `<div class="project-list">${renderProjects(section.items)}</div>`,
+  resources: (section) =>
+    `<div class="resource-grid" role="group" aria-label="${text(content.ui.resourceLinks)}">${renderResourceCategories(section.items)}</div>`,
+};
+
+const renderSections = () =>
+  content.sections
+    .filter(({ enabled }) => enabled)
+    .map((section) => {
+      const titleId = `${section.id}-title`;
+      return `
+        <section class="content-section${sectionClasses[section.id] ?? ""}" aria-labelledby="${titleId}">
+          ${renderSectionTitle(titleId, section.title, sectionIcons[section.id])}
+          ${sectionBodies[section.id](section)}
+        </section>
+      `;
+    })
+    .join("");
 
 const applyAppearance = () => {
   const activeMode = resolvedMode();
   root.dataset.theme = theme;
   root.dataset.mode = mode;
   root.dataset.resolvedMode = activeMode;
-  themeColor.content = {
-    "white-light": "#ffffff",
-    "white-dark": "#111110",
-    "claude-light": "#f1eadf",
-    "claude-dark": "#25211e",
-    "linkedin-light": "#f3f7fb",
-    "linkedin-dark": "#101820",
-    "spotify-light": "#f3f8f4",
-    "spotify-dark": "#111713",
-    "youtube-light": "#fff6f6",
-    "youtube-dark": "#1b1112",
-    "twitch-light": "#faf7ff",
-    "twitch-dark": "#181323",
-    "bilibili-light": "#fff6fa",
-    "bilibili-dark": "#1d1218",
-  }[`${theme}-${activeMode}`];
+  themeColor.content = getComputedStyle(root).getPropertyValue("--canvas").trim();
 };
 
 const render = () => {
-  root.lang = language === "zh" ? "zh-CN" : "en";
+  root.lang = currentLanguage().htmlLang;
   document.title = pick(content.site.title);
   description.content = pick(content.site.description);
-  skipLink.textContent = pick(content.labels.skip);
+  openGraphTitle.content = pick(content.site.title);
+  openGraphDescription.content = pick(content.site.description);
+  skipLink.textContent = pick(content.ui.skip);
   applyAppearance();
 
   app.innerHTML = `
@@ -641,46 +691,16 @@ const render = () => {
         ${renderPortrait()}
         <div class="profile-copy">
           ${renderProfileName()}
-          <p class="profile-role">${pick(content.profile.role)}</p>
-          <p class="profile-introduction">${pick(content.profile.introduction)}</p>
+          <p class="profile-role">${text(content.profile.role)}</p>
+          <p class="profile-introduction">${text(content.profile.introduction)}</p>
         </div>
       </header>
 
-      <section class="content-section contact-section" aria-labelledby="contact-title">
-        ${renderSectionTitle("contact-title", content.labels.contactTitle, contactSectionIcon)}
-        ${renderContacts()}
-      </section>
-
-      <section class="content-section research-section" aria-labelledby="research-areas-title">
-        ${renderSectionTitle("research-areas-title", content.labels.researchAreasTitle, researchSectionIcon)}
-        <div class="research-grid">${renderResearchAreas()}</div>
-      </section>
-
-      <section class="content-section" aria-labelledby="publications-title">
-        ${renderSectionTitle("publications-title", content.labels.publicationsTitle, publicationsSectionIcon)}
-        <div class="publication-list">${renderPublications()}</div>
-      </section>
-
-      <section class="content-section" aria-labelledby="education-title">
-        ${renderSectionTitle("education-title", content.labels.educationTitle, educationSectionIcon)}
-        <div class="education-timeline">${renderEducation()}</div>
-      </section>
-
-      <section class="content-section" aria-labelledby="projects-title">
-        ${renderSectionTitle("projects-title", content.labels.projectsTitle, projectsSectionIcon)}
-        <div class="project-list">${renderProjects()}</div>
-      </section>
-
-      <section class="content-section resources-section" aria-labelledby="resources-title">
-        ${renderSectionTitle("resources-title", content.labels.resourcesTitle, resourcesSectionIcon)}
-        <div class="resource-grid" role="group" aria-label="${pick(content.labels.resourceLinks)}">
-          ${renderResourceCategories()}
-        </div>
-      </section>
+      ${renderSections()}
 
       <footer>
-        <span>© ${new Date().getFullYear()} ${pick(content.profile.name)}</span>
-        <span>${pick(content.labels.lastUpdated)} <time datetime="${buildTime.toISOString()}">${formattedBuildTime()}</time></span>
+        <span>© ${new Date().getFullYear()} ${text(content.profile.name)}</span>
+        <span>${text(content.ui.lastUpdated)} <time datetime="${buildTime.toISOString()}">${escapeHtml(formattedBuildTime())}</time></span>
       </footer>
     </main>
   `;
@@ -699,7 +719,7 @@ const updateSettings = (open) => {
   toggle.setAttribute("aria-expanded", String(open));
   toggle.setAttribute(
     "aria-label",
-    open ? pick(content.labels.closeSettings) : pick(content.labels.settings),
+    open ? pick(content.ui.closeSettings) : pick(content.ui.settings),
   );
 };
 
