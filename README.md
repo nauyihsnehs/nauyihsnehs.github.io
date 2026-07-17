@@ -1,6 +1,9 @@
 # Academic homepage
 
-A bilingual, theme-switchable academic homepage built with Vite and plain HTML, CSS, and JavaScript. The current profile, education, links, publications, and portrait are deliberate placeholders.
+A bilingual, theme-switchable academic homepage built with Vite and plain HTML,
+CSS, and JavaScript. Vite renders the complete default-language page at build
+time; the browser script only handles localization and interaction. The current
+profile, education, links, publications, and portrait are deliberate placeholders.
 
 ## Local preview
 
@@ -70,15 +73,15 @@ and set **Build and deployment → Source** to **GitHub Actions**. Deployment fr
 the root of `main` is not the supported production configuration because this
 is a Vite project. Keep Actions enabled for the repository.
 
-The source is intentionally browser-compatible as an emergency fallback, but
-normal production deployment must use the artifact produced by
-`.github/workflows/pages.yml`.
+The generated Vite artifact is the only supported site. Opening the repository's
+source `index.html` directly is not a deployment or preview path.
 
 ### Files that an update may intentionally change
 
 - `src/content.js`: profile, bilingual copy, education, links, publications,
   projects, SEO, display defaults, section order, and asset references.
-- `src/app.js`: rendering and interaction behavior.
+- `src/render.js`: build-time HTML rendering and the compact translation payload.
+- `src/app.js`: client-side localization and interaction behavior.
 - `src/styles.css`: layout, themes, responsive behavior, and visual states.
 - `index.html`: document metadata, the application mount point, and source
   entry links.
@@ -127,7 +130,8 @@ available, run the complete check:
 npm run check
 ```
 
-It runs ESLint, content validation, and syntax checks for the JavaScript source.
+It runs ESLint and content validation. ESLint parses every JavaScript module, so
+separate syntax-only checks are unnecessary in the normal workflow.
 The minimum dependency-free checks for a documentation-only or constrained
 environment are:
 
@@ -136,6 +140,7 @@ git diff --check
 node scripts/check-content.js
 node --check src/app.js
 node --check src/content.js
+node --check src/render.js
 node --check scripts/check-content.js
 node --check vite.config.js
 ```
@@ -243,7 +248,7 @@ The update is complete only when all checks below pass:
 
 4. Open `https://nauyihsnehs.github.io/` in a browser and confirm that the full
    profile renders, the stylesheet is applied, language and theme controls work,
-   and the page does not remain at `Preparing the page…`.
+   and the pre-rendered profile is visible before interaction code runs.
 
 5. Finish with a synchronized, clean local checkout:
 
@@ -259,25 +264,21 @@ perform a hard refresh before changing or republishing the code.
 
 ### Project-specific failure diagnosis
 
-If the browser remains at `Preparing the page…`, HTML loaded but `src/app.js`
-did not finish rendering. Check these causes in order:
+If the page is empty or unstyled, check these causes in order:
 
 1. **Pages source is wrong.** Confirm that repository Pages uses GitHub Actions,
    not the root of `main`.
 2. **The workflow failed.** Open the workflow run for the deployed SHA and find
    the first failed step among `npm ci`, `npm run check`, `npm run build`, upload,
    or deploy.
-3. **A module failed to load.** In browser developer tools, inspect Console and
-   Network for `src/app.js`, `src/content.js`, the generated `assets/` files, and
-   MIME-type or 404 errors.
-4. **A Vite-only expression reached the browser.** Do not add bare npm imports
-   or unconditional `import.meta.env` access to source that may be served
-   directly. Keep stylesheet entry links and asset resolution compatible with
-   the fallback path.
-5. **An asset path is wrong.** Source fallback assets live under `public/`, while
-   a Vite build copies those files to the artifact root. Content stores paths
-   relative to `public/`; the single resolver in `src/app.js` handles both
-   locations. Run `npm run content:check` to find missing files.
+3. **The build renderer failed.** Run `npm run build`; `dist/index.html` must
+   contain the profile, sections, translation payload, and generated asset links.
+4. **The interaction module failed to load.** The page remains readable, but
+   language, theme, and media controls stop working. Inspect Console and Network
+   for the generated JavaScript asset and MIME-type or 404 errors.
+5. **An asset path is wrong.** Content stores paths relative to `public/`; Vite
+   copies them to the artifact root. Run `npm run content:check` to find missing
+   files.
 
 ### Required completion report
 

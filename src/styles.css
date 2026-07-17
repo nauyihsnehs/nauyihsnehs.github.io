@@ -378,13 +378,6 @@ a:focus-visible,
   transform: translateY(0);
 }
 
-.loading-note,
-.noscript-note {
-  margin: 20vh auto;
-  max-width: 30rem;
-  text-align: center;
-}
-
 .page-shell {
   width: min(calc(100% - 2rem), 900px);
   margin: 0 auto;

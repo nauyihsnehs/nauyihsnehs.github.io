@@ -3,38 +3,35 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- content-head:start -->
-    <meta
-      name="description"
-      content="A bilingual academic homepage."
-    />
+    <meta name="description" content="__DESCRIPTION__" />
     <meta name="theme-color" content="#ffffff" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Academic Homepage" />
-    <meta
-      property="og:description"
-      content="Research, education, publications, and projects."
-    />
-    <title>Academic Homepage</title>
-    <!-- content-head:end -->
+    <meta property="og:title" content="__TITLE__" />
+    <meta property="og:description" content="__DESCRIPTION__" />
+    <title>__TITLE__</title>
+    <script>
+      try {
+        const r = document.documentElement;
+        const t = localStorage.getItem("academic-theme");
+        const m = localStorage.getItem("academic-color-mode");
+        const l = localStorage.getItem("academic-language");
+        if (t) r.dataset.theme = t;
+        if (m) r.dataset.mode = m;
+        if (l && l !== r.lang) {
+          r.style.visibility = "hidden";
+          setTimeout(() => (r.style.visibility = ""), 500);
+        }
+        r.dataset.resolvedMode =
+          m === "dark" ||
+          (m !== "light" && matchMedia("(prefers-color-scheme:dark)").matches)
+            ? "dark"
+            : "light";
+      } catch {}
+    </script>
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
-    <!-- content-skip:start -->
-    <a class="skip-link" id="skip-link" href="#main">Skip to content</a>
-    <!-- content-skip:end -->
-    <div id="app">
-      <!-- content-loading:start -->
-      <p class="loading-note">Preparing the page…</p>
-      <!-- content-loading:end -->
-    </div>
-    <noscript>
-      <!-- content-noscript:start -->
-      <p class="noscript-note">
-        This page needs JavaScript for bilingual content and theme switching.
-      </p>
-      <!-- content-noscript:end -->
-    </noscript>
+    <div id="app"><!-- site --></div>
     <script type="module" src="./src/app.js"></script>
   </body>
 </html>

@@ -10,11 +10,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "content:check": "node scripts/check-content.js",
-    "check": "npm run lint && npm run content:check && node --check src/app.js && node --check src/content.js && node --check scripts/check-content.js && node --check vite.config.js"
-  },
-  "dependencies": {
-    "@fontsource/libertinus-sans": "^5.2.1",
-    "@fontsource/libertinus-serif": "^5.2.1"
+    "check": "npm run lint && npm run content:check"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
