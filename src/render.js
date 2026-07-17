@@ -53,7 +53,7 @@ export const renderSite = (content, buildTime) => {
   const enabled = (items) => items.filter((item) => item.enabled);
   const asset = (path) => escape(path);
   const contactIcon = (icon) =>
-    `<span class="contact-icon" aria-hidden="true" style="--contact-icon:url('./${asset(icon)}')"></span>`;
+    `<span class="contact-icon" aria-hidden="true" style="--contact-icon:url('/${asset(icon)}')"></span>`;
   const externalIcon = ({ platform, label, href, icon }) =>
     href
       ? `<a class="profile-icon-link" data-platform="${platform}" href="${escape(href)}" target="_blank" rel="noreferrer" aria-label="${escape(label)}" title="${escape(label)}">${contactIcon(icon)}</a>`
