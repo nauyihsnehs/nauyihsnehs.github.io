@@ -121,6 +121,15 @@ const asset = (value, field, optional = false) => {
   }
 };
 
+const assetList = (values, field) => {
+  if (!Array.isArray(values) || values.length < 2) {
+    fail(field, "must be an array with at least two assets");
+    return;
+  }
+  if (new Set(values).size !== values.length) fail(field, "may not contain duplicates");
+  values.forEach((value, index) => asset(value, `${field}[${index}]`));
+};
+
 const href = (value, field) => {
   if (!optionalString(value, field)) return;
   if (!value) return;
@@ -291,8 +300,41 @@ const validateResources = (section, field) =>
   list(section.items, `${field}.items`, (item, itemField) => {
     enabled(item.enabled, `${itemField}.enabled`);
     localized(item.title, `${itemField}.title`);
-    href(item.href, `${itemField}.href`);
   });
+
+const validateResourcePage = (value, field) => {
+  if (!isObject(value)) {
+    fail(field, "must be an object");
+    return;
+  }
+  localized(value.title, `${field}.title`);
+  localized(value.metaTitle, `${field}.metaTitle`);
+  localized(value.description, `${field}.description`);
+  localized(value.introduction, `${field}.introduction`);
+  if (
+    !Array.isArray(value.views) ||
+    !value.views.some((view) => isObject(view) && view.enabled)
+  ) {
+    fail(`${field}.views`, "must contain at least one enabled view");
+  }
+  list(value.views, `${field}.views`, (view, viewField) => {
+    enabled(view.enabled, `${viewField}.enabled`);
+    localized(view.title, `${viewField}.title`);
+    localized(view.description, `${viewField}.description`);
+    if (
+      !Array.isArray(view.items) ||
+      !view.items.some((item) => isObject(item) && item.enabled)
+    ) {
+      fail(`${viewField}.items`, "must contain at least one enabled item");
+    }
+    list(view.items, `${viewField}.items`, (item, itemField) => {
+      enabled(item.enabled, `${itemField}.enabled`);
+      localized(item.title, `${itemField}.title`);
+      localized(item.description, `${itemField}.description`);
+      href(item.href, `${itemField}.href`);
+    });
+  });
+};
 
 const sectionValidators = {
   contact: validateContact,
@@ -310,9 +352,9 @@ localized(content.profile.name, "profile.name");
 localized(content.profile.role, "profile.role");
 localized(content.profile.introduction, "profile.introduction");
 requiredString(content.profile.initials, "profile.initials");
-asset(content.profile.portrait.primary, "profile.portrait.primary");
-asset(content.profile.portrait.alternate, "profile.portrait.alternate");
+assetList(content.profile.portrait.sources, "profile.portrait.sources");
 localized(content.profile.portrait.alt, "profile.portrait.alt");
+validateResourcePage(content.resourcePage, "resourcePage");
 
 list(content.display.languages, "display.languages", (item, field) => {
   requiredString(item.label, `${field}.label`);
@@ -372,11 +414,18 @@ const requiredUi = [
   "closeSettings",
   "resourceLinks",
   "replaceLink",
-  "showAlternatePortrait",
+  "cyclePortrait",
+  "previousResearch",
+  "nextResearch",
   "showMotion",
   "showProjectMotion",
   "backToTop",
   "lastUpdated",
+  "home",
+  "resourceCategories",
+  "resourceEntries",
+  "resourcePlaceholder",
+  "openResource",
   ...(Array.isArray(content.display.themes) ? content.display.themes : []),
   ...(Array.isArray(content.display.modes) ? content.display.modes : []),
 ];
@@ -390,6 +439,24 @@ list(content.sections, "sections", (section, field) => {
     return;
   }
   sectionValidators[section.id](section, field);
+});
+
+const resourceSection = content.sections?.find(({ id }) => id === "resources");
+const resourceIds = resourceSection?.items?.map(({ id }) => id) ?? [];
+const viewIds = content.resourcePage?.views?.map(({ id }) => id) ?? [];
+if (resourceIds.join("|") !== viewIds.join("|")) {
+  fail(
+    "resourcePage.views",
+    "IDs and order must match the homepage resources section",
+  );
+}
+resourceSection?.items?.forEach((item, index) => {
+  if (item.enabled !== content.resourcePage?.views?.[index]?.enabled) {
+    fail(
+      `resourcePage.views[${index}].enabled`,
+      "must match the corresponding homepage resource",
+    );
+  }
 });
 
 const configuredSections = new Set(content.sections?.map(({ id }) => id));

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="white" data-mode="auto" data-resolved-mode="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="__DESCRIPTION__" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="__TITLE__" />
+    <meta property="og:description" content="__DESCRIPTION__" />
+    <title>__TITLE__</title>
+    <script>
+      try {
+        const r = document.documentElement;
+        const t = localStorage.getItem("academic-theme");
+        const m = localStorage.getItem("academic-color-mode");
+        const l = localStorage.getItem("academic-language");
+        if (t) r.dataset.theme = t;
+        if (m) r.dataset.mode = m;
+        if (l && l !== r.lang) {
+          r.style.visibility = "hidden";
+          setTimeout(() => (r.style.visibility = ""), 500);
+        }
+        r.dataset.resolvedMode =
+          m === "dark" ||
+          (m !== "light" && matchMedia("(prefers-color-scheme:dark)").matches)
+            ? "dark"
+            : "light";
+      } catch {}
+    </script>
+    <link rel="stylesheet" href="../src/styles.css" />
+  </head>
+  <body>
+    <div id="app"><!-- resources-site --></div>
+    <script type="module" src="../src/app.js"></script>
+  </body>
+</html>

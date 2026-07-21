@@ -1,7 +1,9 @@
+import { resolve } from "node:path";
+
 import { defineConfig } from "vite";
 
 import { content } from "./src/content.js";
-import { renderSite } from "./src/render.js";
+import { renderResourcesPage, renderSite } from "./src/render.js";
 
 const escape = (value) =>
   value
@@ -11,12 +13,24 @@ const escape = (value) =>
 
 export default defineConfig({
   base: "./",
+  build: {
+    rollupOptions: {
+      input: {
+        home: resolve(import.meta.dirname, "index.html"),
+        resources: resolve(import.meta.dirname, "resources/index.html"),
+      },
+    },
+  },
   plugins: [
     {
-      name: "render-site",
+      name: "render-pages",
       transformIndexHtml(html) {
         const buildTime = new Date().toISOString();
-        const site = renderSite(content, buildTime);
+        const resources = html.includes("<!-- resources-site -->");
+        const marker = resources ? "<!-- resources-site -->" : "<!-- site -->";
+        const site = resources
+          ? renderResourcesPage(content, buildTime)
+          : renderSite(content, buildTime);
 
         return html
           .replace(
@@ -25,7 +39,7 @@ export default defineConfig({
           )
           .replaceAll("__TITLE__", escape(site.title))
           .replaceAll("__DESCRIPTION__", escape(site.description))
-          .replace("<!-- site -->", site.body);
+          .replace(marker, site.body);
       },
     },
   ],

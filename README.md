@@ -1,9 +1,14 @@
 # Academic homepage
 
 A bilingual, theme-switchable academic homepage built with Vite and plain HTML,
-CSS, and JavaScript. Vite renders the complete default-language page at build
+CSS, and JavaScript. Vite renders the complete default-language pages at build
 time; the browser script only handles localization and interaction. The current
-profile, education, links, publications, and portrait are deliberate placeholders.
+profile, education, links, publications, resources, and portrait are deliberate
+placeholders.
+
+The homepage is served from `/`. Its Related Resources cards open the matching
+hash view on `/resources/`, where Datasets, Academic Tools, Reading & Blogs, and
+Learning Materials share one secondary-page shell.
 
 ## Local preview
 
@@ -21,9 +26,10 @@ npm run build
 ## Replace the draft content
 
 `src/content.js` is the single editing entry point for profile information,
-bilingual copy, links, SEO metadata, display defaults, and section order. Each
-translated field has an `en` and `zh` value. Section order follows the
-`sections` array; set a section or item `enabled` value to `false` to hide it.
+bilingual copy, links, SEO metadata, display defaults, homepage section order,
+and the resource-page views. Each translated field has an `en` and `zh` value.
+Section order follows the `sections` array; set a section or item `enabled`
+value to `false` to hide it.
 
 1. Edit the site, profile, and section records in `src/content.js`.
 2. Store custom media below `public/content/` and reference it with a path
@@ -33,7 +39,9 @@ translated field has an `en` and `zh` value. Section order follows the
    muted `mp4`/`webm` video.
 4. Add real URLs to contact and resource records. Empty URLs remain visible as
    draft slots but are not clickable.
-5. Run `npm run content:check` before previewing or publishing. It validates the
+5. Keep the IDs and order in the homepage `resources` section aligned with
+   `resourcePage.views`; these IDs become the `/resources/#category` links.
+6. Run `npm run content:check` before previewing or publishing. It validates the
    bilingual structure, IDs, dates, links, supported display values, and every
    referenced media file.
 
@@ -83,8 +91,8 @@ source `index.html` directly is not a deployment or preview path.
 - `src/render.js`: build-time HTML rendering and the compact translation payload.
 - `src/app.js`: client-side localization and interaction behavior.
 - `src/styles.css`: layout, themes, responsive behavior, and visual states.
-- `index.html`: document metadata, the application mount point, and source
-  entry links.
+- `index.html` and `resources/index.html`: document metadata, application mount
+  points, and source entry links.
 - `public/`: portraits, logos, QR images, icons, and publication media.
 - `scripts/check-content.js`: the content contract and static validation rules.
 - `package.json` and `package-lock.json`: dependencies and scripts; update them

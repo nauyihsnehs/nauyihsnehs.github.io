@@ -8,6 +8,8 @@ const escape = (value) =>
 
 const icons = {
   arrow: '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 13 13 3M6 3h7v7"/></svg>',
+  forward: '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 8h11M9.5 4l4 4-4 4"/></svg>',
+  back: '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M13.5 8h-11M6.5 4l-4 4 4 4"/></svg>',
   gear: '<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.4"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2.5v4.1M12 17.4v4.1M2.5 12h4.1M17.4 12h4.1M5.28 5.28l2.9 2.9M15.82 15.82l2.9 2.9M18.72 5.28l-2.9 2.9M8.18 15.82l-2.9 2.9"/></svg>',
   up: '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6.5 14.5 5.5-5.5 5.5 5.5"/></svg>',
   contact: '<svg class="section-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M3.5 5.5h17v13h-17Z"/><path d="m4 6 8 7 8-7"/></svg>',
@@ -34,7 +36,7 @@ const modeIcons = {
   dark: '<svg class="mode-logo" aria-hidden="true" viewBox="0 0 24 24"><path d="M19.5 15.3A8 8 0 0 1 8.7 4.5a8 8 0 1 0 10.8 10.8Z"/></svg>',
 };
 
-export const renderSite = (content, buildTime) => {
+const createPage = (content, buildTime, metadata) => {
   const defaultLanguage = content.site.defaultLanguage;
   const alternateLanguage = content.display.languages.find(
     ({ id }) => id !== defaultLanguage,
@@ -51,6 +53,60 @@ export const renderSite = (content, buildTime) => {
   const attribute = (value, name) =>
     `data-i="${index(value)}" data-ia="${name}" ${name}="${escape(value[defaultLanguage])}"`;
   const enabled = (items) => items.filter((item) => item.enabled);
+  const settings = `
+    <aside class="settings" data-settings data-open="false" data-pinned="false">
+      <button class="settings-toggle" type="button" data-settings-toggle aria-label="${escape(content.ui.settings[defaultLanguage])}" aria-expanded="false" aria-controls="settings-panel">${icons.gear}</button>
+      <div class="settings-panel" id="settings-panel" role="group" ${attribute(content.ui.settings, "aria-label")}>
+        <div class="settings-row">${text(content.ui.language)}<div class="control-group">${content.display.languages.map(({ id, label }) => `<button type="button" data-language="${id}" aria-pressed="${id === defaultLanguage}">${escape(label)}</button>`).join("")}</div></div>
+        <div class="settings-row">${text(content.ui.theme)}<div class="control-group theme-group">${content.display.themes.map((value) => `<button class="theme-option" type="button" data-theme="${value}" ${attribute(content.ui[value], "aria-label")} title="${escape(content.ui[value][defaultLanguage])}" aria-pressed="${value === content.display.defaultTheme}">${themeIcons[value]}</button>`).join("")}</div></div>
+        <div class="settings-row">${text(content.ui.mode)}<div class="control-group mode-group">${content.display.modes.map((value) => `<button class="mode-option" type="button" data-mode="${value}" ${attribute(content.ui[value], "aria-label")} title="${escape(content.ui[value][defaultLanguage])}" aria-pressed="${value === content.display.defaultMode}">${modeIcons[value]}</button>`).join("")}</div></div>
+      </div>
+    </aside>`;
+  const render = (main, className = "") => {
+    const labels = {
+      settings: content.ui.settings,
+      closeSettings: content.ui.closeSettings,
+      replaceLink: content.ui.replaceLink,
+      title: metadata.title,
+      description: metadata.description,
+    };
+    const body = `
+      <a class="skip-link" id="skip-link" href="#main" data-i="${index(content.ui.skip)}">${escape(content.ui.skip[defaultLanguage])}</a>
+      <div class="floating-tools">${settings}<a class="floating-button back-to-top" data-back-to-top data-visible="false" href="#main" ${attribute(content.ui.backToTop, "aria-label")} title="${escape(content.ui.backToTop[defaultLanguage])}">${icons.up}</a></div>
+      <main id="main" class="page-shell${className ? ` ${className}` : ""}">
+        ${main}
+        <footer><span>© ${new Date(buildTime).getUTCFullYear()} ${text(content.profile.name)}</span><span>${text(content.ui.lastUpdated)} <time data-build-time datetime="${buildTime}"></time></span></footer>
+      </main>
+      <script id="i18n" type="application/json">${JSON.stringify({
+        translations,
+        labels,
+        languages: content.display.languages,
+        defaultLanguage,
+        alternateLanguage,
+      }).replaceAll("<", "\\u003c")}</script>`;
+    return {
+      body,
+      title: metadata.title[defaultLanguage],
+      description: metadata.description[defaultLanguage],
+      htmlLang: content.display.languages.find(({ id }) => id === defaultLanguage)
+        .htmlLang,
+      theme: content.display.defaultTheme,
+      mode: content.display.defaultMode,
+    };
+  };
+  return { alternateLanguage, attribute, defaultLanguage, enabled, index, render, text };
+};
+
+export const renderSite = (content, buildTime) => {
+  const {
+    alternateLanguage,
+    attribute,
+    defaultLanguage,
+    enabled,
+    index,
+    render,
+    text,
+  } = createPage(content, buildTime, content.site);
   const asset = (path) => escape(path);
   const contactIcon = (icon) =>
     `<span class="contact-icon" aria-hidden="true" style="--contact-icon:url('/${asset(icon)}')"></span>`;
@@ -116,10 +172,16 @@ export const renderSite = (content, buildTime) => {
           .join("")}</div>
         <div class="profile-icon-row" role="group" ${attribute(content.ui.personalLinks, "aria-label")}>${enabled(section.academicLinks).map(externalIcon).join("")}${enabled(section.socialLinks).map(socialIcon).join("")}</div>
       </div>`,
-    research: (section) =>
-      `<div class="research-grid">${enabled(section.items)
+    research: (section) => {
+      const items = enabled(section.items);
+      const cards = items
         .map((item) => `<article class="research-card" data-research-card="${item.id}" data-pinned="false" data-revealed="false" role="button" tabindex="0" aria-expanded="false" aria-describedby="research-area-${item.id}-description"><div class="research-visual"><img src="./${asset(item.image.src)}" ${attribute(item.image.alt, "alt")} loading="lazy"/><p class="research-description" id="research-area-${item.id}-description" data-i="${index(item.description)}">${escape(item.description[defaultLanguage])}</p></div>${text(item.title, "h3")}<ul class="research-keywords" ${attribute(item.title, "aria-label")}>${item.keywords[defaultLanguage].map((word, wordIndex) => `<li data-i="${index(item.keywords[alternateLanguage][wordIndex])}">${escape(word)}</li>`).join("")}</ul></article>`)
-        .join("")}</div>`,
+        .join("");
+      const dots = items
+        .map((item, itemIndex) => `<button class="research-dot" type="button" data-research-slide="${itemIndex}" ${attribute(item.title, "aria-label")} aria-pressed="${itemIndex === 0}"></button>`)
+        .join("");
+      return `<div class="research-carousel" data-research-carousel data-research-current="0"><div class="research-viewport" data-research-viewport><div class="research-track">${cards}</div></div><div class="research-controls"><button class="research-control" type="button" data-research-direction="-1" ${attribute(content.ui.previousResearch, "aria-label")}>${icons.back}</button><div class="research-dots" role="group">${dots}</div><button class="research-control" type="button" data-research-direction="1" ${attribute(content.ui.nextResearch, "aria-label")}>${icons.forward}</button></div><p class="visually-hidden" data-research-status role="status" aria-live="polite">${escape(items[0].title[defaultLanguage])}</p></div>`;
+    },
     publications: (section) =>
       `<div class="publication-list">${enabled(section.items)
         .map((item) => `<article class="publication-item">${teaser(item.teaser, content.ui.showMotion)}<div class="publication-copy"><p class="publication-meta">${escape(item.year)} · ${text(item.venue)} · ${text(item.note)}</p><h3>${item.titleUrl ? `<a href="${escape(item.titleUrl)}" target="_blank" rel="noreferrer" data-i="${index(item.title)}">${escape(item.title[defaultLanguage])}</a>` : text(item.title)}</h3><p class="publication-authors">${authors(item.authors)}</p><div class="publication-links" ${attribute(content.ui.publicationLinks, "aria-label")}>${links(item.links)}</div></div></article>`)
@@ -134,7 +196,7 @@ export const renderSite = (content, buildTime) => {
         .join("")}</div>`,
     resources: (section) =>
       `<div class="resource-grid" role="group" ${attribute(content.ui.resourceLinks, "aria-label")}>${enabled(section.items)
-        .map((item) => item.href ? `<a class="resource-card" href="${escape(item.href)}" target="_blank" rel="noreferrer">${text(item.title)}${icons.arrow}</a>` : `<span class="resource-card resource-card--empty" data-empty-link title="${escape(content.ui.replaceLink[defaultLanguage])}">${text(item.title)}<span aria-hidden="true">＋</span></span>`)
+        .map((item) => `<a class="resource-card" href="./resources/#${item.id}">${text(item.title)}${icons.forward}</a>`)
         .join("")}</div>`,
   };
 
@@ -144,47 +206,61 @@ export const renderSite = (content, buildTime) => {
   const alternateName = content.profile.name.zh === content.profile.name.en
     ? ""
     : `<span class="profile-name-alternate" data-name-alternate data-en-name="${escape(content.profile.name.en)}" data-zh-name="${escape(content.profile.name.zh)}" lang="${alternateLanguage === "zh" ? "zh-CN" : "en"}">${defaultLanguage === "zh" ? `（${escape(content.profile.name.en)}）` : `(${escape(content.profile.name.zh)})`}</span>`;
-  const settings = `
-    <aside class="settings" data-settings data-open="false" data-pinned="false">
-      <button class="settings-toggle" type="button" data-settings-toggle aria-label="${escape(content.ui.settings[defaultLanguage])}" aria-expanded="false" aria-controls="settings-panel">${icons.gear}</button>
-      <div class="settings-panel" id="settings-panel" role="group" ${attribute(content.ui.settings, "aria-label")}>
-        <div class="settings-row">${text(content.ui.language)}<div class="control-group">${content.display.languages.map(({ id, label }) => `<button type="button" data-language="${id}" aria-pressed="${id === defaultLanguage}">${escape(label)}</button>`).join("")}</div></div>
-        <div class="settings-row">${text(content.ui.theme)}<div class="control-group theme-group">${content.display.themes.map((value) => `<button class="theme-option" type="button" data-theme="${value}" ${attribute(content.ui[value], "aria-label")} title="${escape(content.ui[value][defaultLanguage])}" aria-pressed="${value === content.display.defaultTheme}">${themeIcons[value]}</button>`).join("")}</div></div>
-        <div class="settings-row">${text(content.ui.mode)}<div class="control-group mode-group">${content.display.modes.map((value) => `<button class="mode-option" type="button" data-mode="${value}" ${attribute(content.ui[value], "aria-label")} title="${escape(content.ui[value][defaultLanguage])}" aria-pressed="${value === content.display.defaultMode}">${modeIcons[value]}</button>`).join("")}</div></div>
-      </div>
-    </aside>`;
-  const labels = {
-    settings: content.ui.settings,
-    closeSettings: content.ui.closeSettings,
-    replaceLink: content.ui.replaceLink,
-    title: content.site.title,
-    description: content.site.description,
-  };
-  const body = `
-    <a class="skip-link" id="skip-link" href="#main" data-i="${index(content.ui.skip)}">${escape(content.ui.skip[defaultLanguage])}</a>
-    <div class="floating-tools">${settings}<a class="floating-button back-to-top" data-back-to-top data-visible="false" href="#main" ${attribute(content.ui.backToTop, "aria-label")} title="${escape(content.ui.backToTop[defaultLanguage])}">${icons.up}</a></div>
-    <main id="main" class="page-shell">
+  const portraitSources = content.profile.portrait.sources.map(
+    (source) => `./${source}`,
+  );
+  const main = `
       <header class="profile-header">
-        <div class="swap-media portrait-media" data-swap-media data-motion="false" role="button" tabindex="0" ${attribute(content.ui.showAlternatePortrait, "aria-label")} aria-pressed="false"><img class="media-primary" src="./${asset(content.profile.portrait.primary)}" ${attribute(content.profile.portrait.alt, "alt")} width="160" height="200" fetchpriority="high"/><img class="media-alternate" src="./${asset(content.profile.portrait.alternate)}" alt="" width="160" height="200" aria-hidden="true"/></div>
+        <div class="swap-media portrait-media" data-portrait-carousel data-portrait-index="0" data-portrait-sources="${escape(JSON.stringify(portraitSources))}" role="button" tabindex="0" ${attribute(content.ui.cyclePortrait, "aria-label")}><img class="media-primary" data-portrait-image src="./${asset(content.profile.portrait.sources[0])}" ${attribute(content.profile.portrait.alt, "alt")} width="1086" height="1448" fetchpriority="high"/></div>
         <div class="profile-copy"><h1>${text(content.profile.name)}${alternateName}</h1>${text(content.profile.role, "p", ' class="profile-role"')}${text(content.profile.introduction, "p", ' class="profile-introduction"')}</div>
       </header>
-      ${sections}
-      <footer><span>© ${new Date(buildTime).getUTCFullYear()} ${text(content.profile.name)}</span><span>${text(content.ui.lastUpdated)} <time data-build-time datetime="${buildTime}"></time></span></footer>
-    </main>
-    <script id="i18n" type="application/json">${JSON.stringify({
-      translations,
-      labels,
-      languages: content.display.languages,
-      defaultLanguage,
-      alternateLanguage,
-    }).replaceAll("<", "\\u003c")}</script>`;
-  return {
-    body,
-    title: content.site.title[defaultLanguage],
-    description: content.site.description[defaultLanguage],
-    htmlLang: content.display.languages.find(({ id }) => id === defaultLanguage)
-      .htmlLang,
-    theme: content.display.defaultTheme,
-    mode: content.display.defaultMode,
+      ${sections}`;
+  return render(main);
+};
+
+export const renderResourcesPage = (content, buildTime) => {
+  const metadata = {
+    title: content.resourcePage.metaTitle,
+    description: content.resourcePage.description,
   };
+  const { attribute, defaultLanguage, enabled, render, text } = createPage(
+    content,
+    buildTime,
+    metadata,
+  );
+  const views = enabled(content.resourcePage.views);
+  const defaultView = views[0].id;
+  const entry = (item) => {
+    const link = item.href
+      ? `<a class="resource-entry-link" href="${escape(item.href)}" target="_blank" rel="noreferrer">${text(content.ui.openResource)}${icons.arrow}</a>`
+      : `<span class="resource-entry-link resource-entry-link--empty" data-empty-link title="${escape(content.ui.replaceLink[defaultLanguage])}">${text(content.ui.resourcePlaceholder)}<span aria-hidden="true">＋</span></span>`;
+    return `<article class="resource-entry${item.href ? "" : " resource-entry--placeholder"}">${text(item.title, "h3")}${text(item.description, "p")}${link}</article>`;
+  };
+  const navigation = `
+    <nav class="resource-category-nav" ${attribute(content.ui.resourceCategories, "aria-label")}>
+      ${views.map((view) => `<a href="#${view.id}" data-resource-view-link="${view.id}"${view.id === defaultView ? ' aria-current="page"' : ""}>${text(view.title)}</a>`).join("")}
+    </nav>`;
+  const panels = views
+    .map((view) => `
+      <section class="resource-view" id="${view.id}" data-resource-view="${view.id}" aria-labelledby="${view.id}-title"${view.id === defaultView ? "" : " hidden"}>
+        <div class="resource-view-heading">
+          ${text(view.title, "h2", ` id="${view.id}-title"`)}
+          ${text(view.description, "p")}
+        </div>
+        <div class="resource-entry-grid" role="list" ${attribute(content.ui.resourceEntries, "aria-label")}>
+          ${enabled(view.items).map((item) => `<div role="listitem">${entry(item)}</div>`).join("")}
+        </div>
+      </section>`)
+    .join("");
+  const main = `
+    <header class="resource-page-header">
+      <a class="resource-home-link" href="../">${icons.back}${text(content.ui.home)}</a>
+      <div class="resource-page-copy">
+        ${text(content.resourcePage.title, "h1")}
+        ${text(content.resourcePage.introduction, "p")}
+      </div>
+    </header>
+    ${navigation}
+    <div class="resource-view-stack">${panels}</div>`;
+  return render(main, "resource-page-shell");
 };

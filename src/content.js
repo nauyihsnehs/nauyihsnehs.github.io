@@ -40,11 +40,14 @@ export const content = {
       zh: "我关注你的主要研究领域及其相邻学科之间的问题。请将这段文字替换为你所研究的问题、采用的方法，以及它为什么重要。",
     },
     portrait: {
-      primary: "content/profile/portrait-placeholder.svg",
-      alternate: "content/profile/portrait-alternate.svg",
+      sources: [
+        "content/profile/avatar-pixel.png",
+        "content/profile/avatar-cubism.png",
+        "content/profile/avatar-Mondrian.png",
+      ],
       alt: {
-        en: "Geometric placeholder portrait for Your Name",
-        zh: "你的名字的几何肖像占位图",
+        en: "Stylized portrait of Your Name",
+        zh: "你的名字的风格化肖像",
       },
     },
   },
@@ -475,29 +478,242 @@ export const content = {
           id: "datasets",
           enabled: true,
           title: { en: "Datasets", zh: "数据集" },
-          href: "",
         },
         {
           id: "academic-tools",
           enabled: true,
           title: { en: "Academic Tools", zh: "学术工具" },
-          href: "",
         },
         {
           id: "reading",
           enabled: true,
           title: { en: "Reading & Blogs", zh: "阅读与博客" },
-          href: "",
         },
         {
           id: "learning",
           enabled: true,
           title: { en: "Learning Materials", zh: "学习资料" },
-          href: "",
         },
       ],
     },
   ],
+  resourcePage: {
+    title: { en: "Related Resources", zh: "相关资源" },
+    metaTitle: {
+      en: "Related Resources — Your Name",
+      zh: "相关资源 — 你的名字",
+    },
+    description: {
+      en: "A curated collection of datasets, academic tools, reading, and learning materials from Your Name.",
+      zh: "你的名字整理的数据集、学术工具、阅读内容与学习资料。",
+    },
+    introduction: {
+      en: "This page is a structured placeholder for resources that support research, writing, and continued learning. Replace each draft entry with a resource you recommend.",
+      zh: "本页是研究、写作与持续学习相关资源的结构化占位页面。请将每个草稿条目替换为你推荐的真实资源。",
+    },
+    views: [
+      {
+        id: "datasets",
+        enabled: true,
+        title: { en: "Datasets", zh: "数据集" },
+        description: {
+          en: "Public datasets, benchmarks, and reproducibility artifacts relevant to your research.",
+          zh: "与你的研究相关的公开数据集、基准与可复现性材料。",
+        },
+        items: [
+          {
+            id: "benchmark-dataset",
+            enabled: true,
+            title: {
+              en: "Benchmark Dataset Placeholder",
+              zh: "基准数据集占位条目",
+            },
+            description: {
+              en: "Add a widely used benchmark, its intended tasks, and a brief note on appropriate use.",
+              zh: "添加一个常用基准，并说明它适用的任务与合理使用方式。",
+            },
+            href: "",
+          },
+          {
+            id: "annotated-corpus",
+            enabled: true,
+            title: {
+              en: "Annotated Corpus Placeholder",
+              zh: "标注语料库占位条目",
+            },
+            description: {
+              en: "Add a curated corpus with a short account of its scope, annotations, and license.",
+              zh: "添加一个整理后的语料库，并简述其范围、标注与许可。",
+            },
+            href: "",
+          },
+          {
+            id: "reproducibility-archive",
+            enabled: true,
+            title: {
+              en: "Reproducibility Archive Placeholder",
+              zh: "可复现性档案占位条目",
+            },
+            description: {
+              en: "Add an archive that pairs research data with code, documentation, or evaluation results.",
+              zh: "添加一个将研究数据与代码、文档或评估结果配套归档的资源。",
+            },
+            href: "",
+          },
+        ],
+      },
+      {
+        id: "academic-tools",
+        enabled: true,
+        title: { en: "Academic Tools", zh: "学术工具" },
+        description: {
+          en: "Practical tools and templates for literature review, experimentation, and scholarly communication.",
+          zh: "用于文献综述、实验管理与学术交流的实用工具和模板。",
+        },
+        items: [
+          {
+            id: "literature-workspace",
+            enabled: true,
+            title: {
+              en: "Literature Review Workspace",
+              zh: "文献综述工作区",
+            },
+            description: {
+              en: "Add a tool or template for collecting, comparing, and synthesizing research literature.",
+              zh: "添加一个用于收集、比较和综合研究文献的工具或模板。",
+            },
+            href: "",
+          },
+          {
+            id: "experiment-tracker",
+            enabled: true,
+            title: {
+              en: "Experiment Tracking Template",
+              zh: "实验跟踪模板",
+            },
+            description: {
+              en: "Add a lightweight system for recording hypotheses, configurations, and outcomes.",
+              zh: "添加一个用于记录假设、配置与结果的轻量系统。",
+            },
+            href: "",
+          },
+          {
+            id: "citation-utility",
+            enabled: true,
+            title: {
+              en: "Citation Utility Placeholder",
+              zh: "引文工具占位条目",
+            },
+            description: {
+              en: "Add a utility that improves citation management, metadata cleanup, or bibliography checks.",
+              zh: "添加一个改善引文管理、元数据清理或参考文献检查的工具。",
+            },
+            href: "",
+          },
+        ],
+      },
+      {
+        id: "reading",
+        enabled: true,
+        title: { en: "Reading & Blogs", zh: "阅读与博客" },
+        description: {
+          en: "Selected essays, research notes, and reading lists that provide useful context and perspective.",
+          zh: "提供有价值背景与观点的精选文章、研究笔记和阅读清单。",
+        },
+        items: [
+          {
+            id: "research-notes",
+            enabled: true,
+            title: {
+              en: "Research Notes Collection",
+              zh: "研究笔记合集",
+            },
+            description: {
+              en: "Add a collection of concise notes that explains important ideas in your field.",
+              zh: "添加一组简明解释你所在领域重要概念的研究笔记。",
+            },
+            href: "",
+          },
+          {
+            id: "field-reading-list",
+            enabled: true,
+            title: {
+              en: "Field Reading List Placeholder",
+              zh: "领域阅读清单占位条目",
+            },
+            description: {
+              en: "Add a guided sequence of foundational and recent readings for newcomers.",
+              zh: "添加一份面向初学者、涵盖基础与近期成果的引导式阅读顺序。",
+            },
+            href: "",
+          },
+          {
+            id: "methods-blog-roll",
+            enabled: true,
+            title: {
+              en: "Methods Blog Roll Placeholder",
+              zh: "方法博客清单占位条目",
+            },
+            description: {
+              en: "Add trustworthy authors who write clearly about methods, evidence, and research practice.",
+              zh: "添加清晰讨论研究方法、证据与实践的可信作者或博客。",
+            },
+            href: "",
+          },
+        ],
+      },
+      {
+        id: "learning",
+        enabled: true,
+        title: { en: "Learning Materials", zh: "学习资料" },
+        description: {
+          en: "Courses, tutorials, and structured paths for building durable knowledge and practical skills.",
+          zh: "用于建立扎实知识与实践能力的课程、教程和结构化学习路径。",
+        },
+        items: [
+          {
+            id: "course-notes",
+            enabled: true,
+            title: {
+              en: "Introductory Course Notes",
+              zh: "入门课程讲义",
+            },
+            description: {
+              en: "Add approachable course notes that establish the field's core concepts and vocabulary.",
+              zh: "添加一套易于理解、介绍领域核心概念与术语的课程讲义。",
+            },
+            href: "",
+          },
+          {
+            id: "workshop-materials",
+            enabled: true,
+            title: {
+              en: "Workshop Materials Placeholder",
+              zh: "研讨课材料占位条目",
+            },
+            description: {
+              en: "Add practical exercises, slides, or demonstrations for a focused research skill.",
+              zh: "添加针对某项研究技能的实践练习、幻灯片或演示。",
+            },
+            href: "",
+          },
+          {
+            id: "self-study-path",
+            enabled: true,
+            title: {
+              en: "Self-Study Path Placeholder",
+              zh: "自学路径占位条目",
+            },
+            description: {
+              en: "Add a staged learning path that connects prerequisites, practice, and advanced material.",
+              zh: "添加一条连接先修知识、实践与进阶材料的分阶段学习路径。",
+            },
+            href: "",
+          },
+        ],
+      },
+    ],
+  },
   ui: {
     loading: { en: "Preparing the page…", zh: "正在准备页面……" },
     noscript: {
@@ -529,9 +745,17 @@ export const content = {
     dark: { en: "Dark", zh: "深色" },
     resourceLinks: { en: "Resource category links", zh: "资源分类链接" },
     replaceLink: { en: "Add URL", zh: "添加链接" },
-    showAlternatePortrait: {
-      en: "Show alternate portrait",
-      zh: "显示第二张肖像",
+    cyclePortrait: {
+      en: "Show next portrait",
+      zh: "切换下一张肖像",
+    },
+    previousResearch: {
+      en: "Show previous research area",
+      zh: "显示上一个研究领域",
+    },
+    nextResearch: {
+      en: "Show next research area",
+      zh: "显示下一个研究领域",
     },
     showMotion: {
       en: "Play publication preview",
@@ -543,5 +767,13 @@ export const content = {
     },
     backToTop: { en: "Back to top", zh: "回到顶部" },
     lastUpdated: { en: "Last updated", zh: "最后更新" },
+    home: { en: "Home", zh: "主页" },
+    resourceCategories: {
+      en: "Resource categories",
+      zh: "资源分类",
+    },
+    resourceEntries: { en: "Resource entries", zh: "资源条目" },
+    resourcePlaceholder: { en: "Link placeholder", zh: "链接占位" },
+    openResource: { en: "Open resource", zh: "打开资源" },
   },
 };
