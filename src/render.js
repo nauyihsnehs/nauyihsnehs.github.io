@@ -174,13 +174,40 @@ export const renderSite = (content, buildTime) => {
       </div>`,
     research: (section) => {
       const items = enabled(section.items);
+      const viewNames = (itemIndex) =>
+        `--research-shell-view-name:research-shell-${itemIndex};` +
+        `--research-media-view-name:research-media-${itemIndex};` +
+        `--research-title-view-name:research-title-${itemIndex};` +
+        `--research-details-view-name:research-details-${itemIndex}`;
+      const card = (item, itemIndex, clone = false) =>
+        `<article class="research-card" data-research-index="${itemIndex}" style="${viewNames(itemIndex)}"${clone ? " data-research-clone aria-hidden=\"true\" inert" : ` data-research-card="${item.id}"${itemIndex === 0 ? ' data-research-active="true"' : ""}`}><div class="research-visual"><img src="./${asset(item.image.src)}" ${attribute(item.image.alt, "alt")} loading="lazy"/></div><div class="research-copy">${text(item.title, "h3")}<div class="research-details"><p class="research-description" data-i="${index(item.description)}">${escape(item.description[defaultLanguage])}</p><ul class="research-keywords" ${attribute(item.title, "aria-label")}>${item.keywords[defaultLanguage].map((word, wordIndex) => `<li data-i="${index(item.keywords[alternateLanguage][wordIndex])}">${escape(word)}</li>`).join("")}</ul></div></div></article>`;
+      const previewLabel = (direction, item) => {
+        const action = content.ui[direction < 0 ? "previousResearch" : "nextResearch"];
+        return {
+          en: `${action.en}: ${item.title.en}`,
+          zh: `${action.zh}：${item.title.zh}`,
+        };
+      };
+      const previews = (direction, initialIndex) => items
+        .map((item, itemIndex) => {
+          const active = itemIndex === initialIndex;
+          return `<button class="research-preview" type="button" data-research-preview data-research-preview-index="${itemIndex}" data-research-direction="${direction}" style="${viewNames(itemIndex)}"${active ? ' data-research-preview-active="true"' : " hidden"} ${attribute(previewLabel(direction, item), "aria-label")}><img src="./${asset(item.image.src)}" alt="" aria-hidden="true" loading="lazy"/>${text(item.title, "span", ' class="research-preview-title"')}</button>`;
+        })
+        .join("");
       const cards = items
-        .map((item) => `<article class="research-card" data-research-card="${item.id}" data-pinned="false" data-revealed="false" role="button" tabindex="0" aria-expanded="false" aria-describedby="research-area-${item.id}-description"><div class="research-visual"><img src="./${asset(item.image.src)}" ${attribute(item.image.alt, "alt")} loading="lazy"/><p class="research-description" id="research-area-${item.id}-description" data-i="${index(item.description)}">${escape(item.description[defaultLanguage])}</p></div>${text(item.title, "h3")}<ul class="research-keywords" ${attribute(item.title, "aria-label")}>${item.keywords[defaultLanguage].map((word, wordIndex) => `<li data-i="${index(item.keywords[alternateLanguage][wordIndex])}">${escape(word)}</li>`).join("")}</ul></article>`)
+        .map((item, itemIndex) => card(item, itemIndex))
         .join("");
-      const dots = items
-        .map((item, itemIndex) => `<button class="research-dot" type="button" data-research-slide="${itemIndex}" ${attribute(item.title, "aria-label")} aria-pressed="${itemIndex === 0}"></button>`)
+      const slides = items.length > 1
+        ? `${card(items.at(-1), items.length - 1, true)}${cards}${card(items[0], 0, true)}`
+        : cards;
+      const progress = items
+        .map((item, itemIndex) => `<button class="research-progress-marker" type="button" data-research-progress-index="${itemIndex}" aria-pressed="${itemIndex === 0}"${itemIndex === 0 ? ' data-research-progress-active="true"' : ""} ${attribute(item.title, "aria-label")}></button>`)
         .join("");
-      return `<div class="research-carousel" data-research-carousel data-research-current="0"><div class="research-viewport" data-research-viewport><div class="research-track">${cards}</div></div><div class="research-controls"><button class="research-control" type="button" data-research-direction="-1" ${attribute(content.ui.previousResearch, "aria-label")}>${icons.back}</button><div class="research-dots" role="group">${dots}</div><button class="research-control" type="button" data-research-direction="1" ${attribute(content.ui.nextResearch, "aria-label")}>${icons.forward}</button></div><p class="visually-hidden" data-research-status role="status" aria-live="polite">${escape(items[0].title[defaultLanguage])}</p></div>`;
+      const previous = items.length > 1
+        ? previews(-1, items.length - 1)
+        : "";
+      const next = items.length > 1 ? previews(1, 1) : "";
+      return `<div class="research-carousel" data-research-carousel data-research-current="0" data-research-ready="false"><div class="research-stage"><div class="research-preview-rail" data-research-preview-rail="-1">${previous}</div><div class="research-main"><div class="research-viewport" data-research-viewport><div class="research-track">${slides}</div></div></div><div class="research-preview-rail" data-research-preview-rail="1">${next}</div><div class="research-progress" data-research-progress>${progress}</div></div><p class="visually-hidden" data-research-status role="status" aria-live="polite">${escape(items[0].title[defaultLanguage])}</p></div>`;
     },
     publications: (section) =>
       `<div class="publication-list">${enabled(section.items)

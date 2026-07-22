@@ -229,6 +229,26 @@ export const content = {
             },
           },
         },
+        {
+          id: "data-centric-ai",
+          enabled: true,
+          title: { en: "Data-Centric AI", zh: "数据中心人工智能" },
+          keywords: {
+            en: ["Data Quality", "Curation", "Benchmarking"],
+            zh: ["数据质量", "数据策展", "基准评估"],
+          },
+          description: {
+            en: "I study how data quality, curation, and benchmark design shape the behavior and evaluation of machine-learning systems.",
+            zh: "我研究数据质量、数据策展与基准设计如何影响机器学习系统的行为和评估。",
+          },
+          image: {
+            src: "content/shared/teaser-placeholder.svg",
+            alt: {
+              en: "Placeholder illustration for data-centric artificial intelligence",
+              zh: "数据中心人工智能示意图占位图",
+            },
+          },
+        },
       ],
     },
     {

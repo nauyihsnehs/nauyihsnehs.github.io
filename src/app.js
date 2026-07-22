@@ -3,13 +3,20 @@ const app = document.querySelector("#app");
 const systemMode = matchMedia("(prefers-color-scheme: dark)");
 const hoverPointer = matchMedia("(hover: hover) and (pointer: fine)");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const layeredResearchTransitions = Boolean(
+  document.startViewTransition &&
+    CSS.supports("view-transition-class: research-shell"),
+);
 const i18n = JSON.parse(document.querySelector("#i18n").textContent);
 const defaults = new WeakMap();
 const timers = new WeakMap();
 const researchScrollTimers = new WeakMap();
 const researchTargets = new WeakMap();
+const researchViewTransitions = new WeakMap();
+const researchPendingTargets = new WeakMap();
+const researchJumps = new WeakSet();
 const selectableCard =
-  ".research-card, .publication-item, .education-item, .project-item";
+  ".publication-item, .education-item, .project-item";
 const storage = {
   get: (key) => {
     try {
@@ -46,7 +53,6 @@ let mode = modes.includes(storage.get("academic-color-mode"))
 let settingsOpen = false;
 let settingsPinned = false;
 let contactTrigger;
-let activeResearch;
 let backToTopVisible = false;
 
 const localize = (scope = document) => {
@@ -322,35 +328,18 @@ const activateMedia = (media) => {
   }
 };
 
-const revealResearch = (card, revealed) => {
-  card.dataset.revealed = String(revealed);
-  card.setAttribute("aria-expanded", String(revealed));
-};
-
-const resetResearch = (except) => {
-  app
-    .querySelectorAll(
-      '[data-research-card][data-pinned="true"],[data-research-card][data-revealed="true"]',
-    )
-    .forEach((card) => {
-      if (card === except) return;
-      card.dataset.pinned = "false";
-      revealResearch(card, false);
-    });
-  if (!except || activeResearch !== except) activeResearch = null;
-};
-
-const activateResearch = (card) => {
-  if (card.dataset.pinned === "true") return;
-  resetResearch(card);
-  card.dataset.pinned = "true";
-  activeResearch = card;
-  revealResearch(card, true);
-};
-
 const researchCards = (carousel) => [
   ...carousel.querySelectorAll("[data-research-card]"),
 ];
+
+const researchSlides = (carousel) => [
+  ...carousel.querySelectorAll("[data-research-index]"),
+];
+
+const researchRealSlide = (carousel, index) =>
+  carousel.querySelector(
+    `[data-research-card][data-research-index="${index}"]`,
+  );
 
 const researchScrollLimit = (viewport) =>
   Math.max(0, viewport.scrollWidth - viewport.clientWidth);
@@ -365,69 +354,238 @@ const researchSnapPosition = (viewport, card) =>
   );
 
 const researchNavigationIndex = (carousel) =>
-  researchTargets.get(carousel) ?? Number(carousel.dataset.researchCurrent);
+  researchPendingTargets.get(carousel) ??
+  researchTargets.get(carousel)?.index ??
+  Number(carousel.dataset.researchCurrent);
+
+const researchClosestSlide = (viewport) => {
+  const carousel = viewport.closest("[data-research-carousel]");
+  let closest;
+  let distance = Infinity;
+  researchSlides(carousel).forEach((slide) => {
+    const nextDistance = Math.abs(
+      researchSnapPosition(viewport, slide) - viewport.scrollLeft,
+    );
+    if (nextDistance >= distance) return;
+    closest = slide;
+    distance = nextDistance;
+  });
+  return closest;
+};
+
+const setResearchProgress = (carousel, index) => {
+  const active = carousel.querySelector("[data-research-progress-active]");
+  const next = carousel.querySelector(
+    `[data-research-progress-index="${index}"]`,
+  );
+  if (active === next) return;
+  active?.removeAttribute("data-research-progress-active");
+  active?.setAttribute("aria-pressed", "false");
+  if (!next) return;
+  next.dataset.researchProgressActive = "true";
+  next.setAttribute("aria-pressed", "true");
+};
+
+const setResearchPreviews = (carousel, index) => {
+  const count = researchCards(carousel).length;
+  if (count < 2) return;
+  const focused = document.activeElement.closest?.("[data-research-preview]");
+  const adjacent = {
+    "-1": (index - 1 + count) % count,
+    "1": (index + 1) % count,
+  };
+  carousel.querySelectorAll("[data-research-preview]").forEach((preview) => {
+    const visible = Number(preview.dataset.researchPreviewIndex) ===
+      adjacent[preview.dataset.researchDirection];
+    if (preview.hidden === !visible) return;
+    preview.hidden = !visible;
+    if (visible) {
+      preview.dataset.researchPreviewActive = "true";
+    } else {
+      preview.removeAttribute("data-research-preview-active");
+    }
+  });
+  if (!focused?.hidden) return;
+  carousel
+    .querySelector(
+      `[data-research-direction="${focused.dataset.researchDirection}"]` +
+        "[data-research-preview-active]",
+    )
+    ?.focus({ preventScroll: true });
+};
+
+const setResearchMotionDirection = (carousel, target) => {
+  const active = carousel.querySelector("[data-research-active]");
+  if (!active || active === target) return 0;
+  const viewport = carousel.querySelector("[data-research-viewport]");
+  const direction = Math.sign(
+    researchSnapPosition(viewport, target) -
+      researchSnapPosition(viewport, active),
+  );
+  direction && (carousel.dataset.researchMotionDirection = String(direction));
+  return direction;
+};
+
+const setResearchActiveSlide = (carousel, active) => {
+  const current = carousel.querySelector("[data-research-active]");
+  if (current !== active) {
+    current?.removeAttribute("data-research-active");
+    active && (active.dataset.researchActive = "true");
+  }
+  active && setResearchProgress(carousel, Number(active.dataset.researchIndex));
+};
+
+const clearResearchSync = (viewport) => {
+  const timer = researchScrollTimers.get(viewport);
+  timer && clearTimeout(timer);
+  researchScrollTimers.delete(viewport);
+};
+
+const scrollResearchTo = (viewport, slide, instant) => {
+  const left = researchSnapPosition(viewport, slide);
+  if (!instant) {
+    viewport.scrollTo({ left, behavior: "smooth" });
+    return;
+  }
+  researchJumps.add(viewport);
+  viewport.style.scrollBehavior = "auto";
+  viewport.scrollTo({ left });
+  viewport.style.removeProperty("scroll-behavior");
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => researchJumps.delete(viewport)),
+  );
+};
 
 const updateResearchStatus = (carousel) => {
   const index = Number(carousel.dataset.researchCurrent);
+  const cards = researchCards(carousel);
+  carousel.querySelectorAll("[data-research-direction]").forEach((button) => {
+    button.disabled = cards.length < 2;
+  });
   carousel.querySelector("[data-research-status]").textContent =
-    researchCards(carousel)[index].querySelector("h3").textContent;
+    cards[index].querySelector("h3").textContent;
 };
 
-const updateResearchState = (carousel, index) => {
+const updateResearchState = (carousel, index, slide = researchRealSlide(carousel, index)) => {
   carousel.dataset.researchCurrent = String(index);
-  carousel.querySelectorAll("[data-research-slide]").forEach((dot) =>
-    dot.setAttribute("aria-pressed", String(Number(dot.dataset.researchSlide) === index)),
-  );
+  setResearchActiveSlide(carousel, slide);
+  setResearchPreviews(carousel, index);
   updateResearchStatus(carousel);
+};
+
+const releaseResearchJump = (carousel) =>
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() =>
+      carousel.removeAttribute("data-research-jumping"),
+    ),
+  );
+
+const commitResearchIndex = (carousel, index) => {
+  const viewport = carousel.querySelector("[data-research-viewport]");
+  const real = researchRealSlide(carousel, index);
+  carousel.dataset.researchJumping = "true";
+  scrollResearchTo(viewport, real, true);
+  updateResearchState(carousel, index, real);
+  releaseResearchJump(carousel);
+};
+
+const commitResearchSlide = (carousel, slide) => {
+  const index = Number(slide.dataset.researchIndex);
+  if (!slide.hasAttribute("data-research-clone")) {
+    updateResearchState(carousel, index, slide);
+    return;
+  }
+  commitResearchIndex(carousel, index);
+};
+
+const finishResearchViewTransition = (carousel, transition) => {
+  if (researchViewTransitions.get(carousel) !== transition) return;
+  researchViewTransitions.delete(carousel);
+  carousel.removeAttribute("data-research-motion-direction");
+  carousel.removeAttribute("data-research-transitioning");
+  if (!document.querySelector("[data-research-transitioning]")) {
+    root.removeAttribute("data-research-motion-direction");
+  }
+  const pending = researchPendingTargets.get(carousel);
+  researchPendingTargets.delete(carousel);
+  if (pending == null || pending === Number(carousel.dataset.researchCurrent)) {
+    return;
+  }
+  showResearchSlide(carousel, pending);
+};
+
+const startResearchViewTransition = (carousel, index, direction) => {
+  carousel.dataset.researchTransitioning = "true";
+  root.dataset.researchMotionDirection = String(direction);
+  const transition = document.startViewTransition(() => {
+    const viewport = carousel.querySelector("[data-research-viewport]");
+    clearResearchSync(viewport);
+    researchTargets.delete(carousel);
+    commitResearchIndex(carousel, index);
+  });
+  researchViewTransitions.set(carousel, transition);
+  const finish = () => finishResearchViewTransition(carousel, transition);
+  transition.finished.then(finish, finish);
 };
 
 const showResearchSlide = (carousel, requested) => {
   const cards = researchCards(carousel);
+  if (cards.length < 2) return;
   const index = (requested + cards.length) % cards.length;
-  const current = researchNavigationIndex(carousel);
-  const wrap = Math.abs(index - current) > 1;
-  const viewport = carousel.querySelector("[data-research-viewport]");
-  const left = researchSnapPosition(viewport, cards[index]);
-  const instant =
-    reducedMotion.matches || wrap || Math.abs(viewport.scrollLeft - left) < 1;
-  researchTargets.set(carousel, index);
-  if (instant) {
-    viewport.style.scrollBehavior = "auto";
-    viewport.scrollTo({ left });
-    viewport.style.removeProperty("scroll-behavior");
-  } else {
-    viewport.scrollTo({ left, behavior: "smooth" });
+  if (researchViewTransitions.has(carousel)) {
+    if (index === Number(carousel.dataset.researchCurrent)) {
+      researchPendingTargets.delete(carousel);
+    } else {
+      researchPendingTargets.set(carousel, index);
+    }
+    return;
   }
+  if (index === Number(carousel.dataset.researchCurrent)) return;
+  const viewport = carousel.querySelector("[data-research-viewport]");
+  const candidates = researchSlides(carousel).filter(
+    (candidate) => Number(candidate.dataset.researchIndex) === index,
+  );
+  const nearest = candidates.reduce((closest, candidate) => {
+    const distance = Math.abs(
+      researchSnapPosition(viewport, candidate) - viewport.scrollLeft,
+    );
+    const closestDistance = Math.abs(
+      researchSnapPosition(viewport, closest) - viewport.scrollLeft,
+    );
+    return distance < closestDistance ? candidate : closest;
+  });
+  const direction = setResearchMotionDirection(carousel, nearest);
+  if (layeredResearchTransitions && !reducedMotion.matches) {
+    startResearchViewTransition(carousel, index, direction);
+    return;
+  }
+  const slide = reducedMotion.matches
+    ? researchRealSlide(carousel, index)
+    : nearest;
+  const left = researchSnapPosition(viewport, slide);
+  const instant =
+    reducedMotion.matches || Math.abs(viewport.scrollLeft - left) < 1;
+  clearResearchSync(viewport);
+  researchTargets.set(carousel, { index, slide });
+  setResearchActiveSlide(carousel, slide);
+  setResearchPreviews(carousel, index);
+  scrollResearchTo(viewport, slide, instant);
   if (!instant) return;
-  const timer = researchScrollTimers.get(viewport);
-  timer && clearTimeout(timer);
-  researchScrollTimers.delete(viewport);
   researchTargets.delete(carousel);
-  updateResearchState(carousel, index);
+  commitResearchSlide(carousel, slide);
 };
 
 const settleResearchSlide = (viewport) => {
   const carousel = viewport.closest("[data-research-carousel]");
-  const cards = researchCards(carousel);
-  let index = 0;
-  let distance = Infinity;
-  cards.forEach((card, cardIndex) => {
-    const nextDistance = Math.abs(
-      researchSnapPosition(viewport, card) - viewport.scrollLeft,
-    );
-    if (nextDistance >= distance) return;
-    index = cardIndex;
-    distance = nextDistance;
-  });
+  const target = researchTargets.get(carousel);
+  const slide = target?.slide ?? researchClosestSlide(viewport);
+  if (!target) setResearchMotionDirection(carousel, slide);
   researchTargets.delete(carousel);
-  if (index !== Number(carousel.dataset.researchCurrent)) {
-    updateResearchState(carousel, index);
-  }
+  commitResearchSlide(carousel, slide);
 };
 
 const scheduleResearchSync = (viewport) => {
-  const timer = researchScrollTimers.get(viewport);
-  timer && clearTimeout(timer);
+  clearResearchSync(viewport);
   researchScrollTimers.set(
     viewport,
     setTimeout(() => {
@@ -435,6 +593,25 @@ const scheduleResearchSync = (viewport) => {
       researchScrollTimers.delete(viewport);
     }, 140),
   );
+};
+
+const takeResearchControl = (event) => {
+  const viewport = event.target.closest?.("[data-research-viewport]");
+  if (!viewport) return;
+  const carousel = viewport.closest("[data-research-carousel]");
+  if (researchViewTransitions.has(carousel)) return;
+  if (!researchTargets.has(carousel)) return;
+  researchTargets.delete(carousel);
+  clearResearchSync(viewport);
+};
+
+const initializeResearch = () => {
+  app.querySelectorAll("[data-research-carousel]").forEach((carousel) => {
+    const first = researchRealSlide(carousel, 0);
+    scrollResearchTo(carousel.querySelector("[data-research-viewport]"), first, true);
+    updateResearchState(carousel, 0, first);
+    carousel.dataset.researchReady = "true";
+  });
 };
 
 const hasSelection = (target) => {
@@ -457,9 +634,9 @@ app.addEventListener("click", (event) => {
   const modeButton = target.closest(".mode-option");
   const portrait = target.closest("[data-portrait-carousel]");
   const researchDirection = target.closest("[data-research-direction]");
-  const researchDot = target.closest("[data-research-slide]");
+  const researchPreview = target.closest("[data-research-preview-index]");
+  const researchProgress = target.closest("[data-research-progress-index]");
   const media = target.closest("[data-swap-media]");
-  const research = target.closest("[data-research-card]");
 
   if (settingsToggle) {
     settingsPinned = settingsOpen ? false : true;
@@ -468,6 +645,11 @@ app.addEventListener("click", (event) => {
     closeContact(true);
   } else if (contactButton) {
     toggleContact(contactButton);
+  } else if (researchPreview) {
+    showResearchSlide(
+      researchPreview.closest("[data-research-carousel]"),
+      Number(researchPreview.dataset.researchPreviewIndex),
+    );
   } else if (researchDirection) {
     const carousel = researchDirection.closest("[data-research-carousel]");
     showResearchSlide(
@@ -475,15 +657,14 @@ app.addEventListener("click", (event) => {
       researchNavigationIndex(carousel) +
         Number(researchDirection.dataset.researchDirection),
     );
-  } else if (researchDot) {
+  } else if (researchProgress) {
+    const carousel = researchProgress.closest("[data-research-carousel]");
     showResearchSlide(
-      researchDot.closest("[data-research-carousel]"),
-      Number(researchDot.dataset.researchSlide),
+      carousel,
+      Number(researchProgress.dataset.researchProgressIndex),
     );
   } else if (portrait) {
     cyclePortrait(portrait);
-  } else if (research) {
-    !hoverPointer.matches && activateResearch(research);
   } else if (media) {
     activateMedia(media);
   } else if (languageButton) {
@@ -505,7 +686,6 @@ const pointerState = (event, entered) => {
   const target = event.target;
   const settings = target.closest("[data-settings]");
   const media = target.closest("[data-swap-media]");
-  const research = target.closest("[data-research-card]");
   if (settings && !settings.contains(event.relatedTarget) && hoverPointer.matches) {
     entered ? updateSettings(true) : !settingsPinned && updateSettings(false);
   }
@@ -515,37 +695,25 @@ const pointerState = (event, entered) => {
       ? setMediaActive(media, true)
       : media.dataset.pinned !== "true" && setMediaActive(media, false);
   }
-  if (research && !research.contains(event.relatedTarget) && hoverPointer.matches) {
-    if (entered) {
-      resetResearch(research);
-      revealResearch(research, true);
-    } else {
-      research.dataset.pinned = "false";
-      revealResearch(research, false);
-      research.blur();
-    }
-  }
 };
 
 app.addEventListener("pointerover", (event) => pointerState(event, true));
 app.addEventListener("pointerout", (event) => pointerState(event, false));
+app.addEventListener("pointerdown", takeResearchControl);
+app.addEventListener("wheel", takeResearchControl, { passive: true });
 app.addEventListener(
   "scroll",
   (event) => {
     const viewport = event.target.closest?.("[data-research-viewport]");
-    viewport && scheduleResearchSync(viewport);
+    if (!viewport || researchJumps.has(viewport)) return;
+    scheduleResearchSync(viewport);
   },
   { capture: true, passive: true },
 );
 app.addEventListener("focusin", (event) => {
   const settings = event.target.closest("[data-settings]");
   const media = event.target.closest("[data-swap-media]");
-  const research = event.target.closest("[data-research-card]");
   settings && updateSettings(true);
-  if (research) {
-    resetResearch(research);
-    revealResearch(research, true);
-  }
   if (media) {
     const allowed = media.dataset.motion !== "true" || !reducedMotion.matches;
     allowed && setMediaActive(media, true);
@@ -554,15 +722,12 @@ app.addEventListener("focusin", (event) => {
 app.addEventListener("focusout", (event) => {
   const settings = event.target.closest("[data-settings]");
   const media = event.target.closest("[data-swap-media]");
-  const research = event.target.closest("[data-research-card]");
   if (settings && !settings.contains(event.relatedTarget) && !settingsPinned) {
     updateSettings(false);
   }
   if (media && !media.contains(event.relatedTarget) && media.dataset.pinned !== "true") {
     setMediaActive(media, false);
   }
-  if (research && !research.contains(event.relatedTarget) &&
-      research.dataset.pinned !== "true") revealResearch(research, false);
 });
 app.addEventListener("keydown", (event) => {
   const carousel = event.target.closest("[data-research-carousel]");
@@ -578,14 +743,9 @@ app.addEventListener("keydown", (event) => {
   if (!["Enter", " "].includes(event.key)) return;
   const portrait = event.target.closest("[data-portrait-carousel]");
   const media = event.target.closest("[data-swap-media]");
-  const research = event.target.closest("[data-research-card]");
-  if (!portrait && !media && !research) return;
+  if (!portrait && !media) return;
   event.preventDefault();
-  if (portrait) {
-    cyclePortrait(portrait);
-  } else {
-    media ? activateMedia(media) : activateResearch(research);
-  }
+  portrait ? cyclePortrait(portrait) : activateMedia(media);
 });
 app.addEventListener(
   "error",
@@ -608,16 +768,12 @@ document.addEventListener("click", (event) => {
     updateSettings(false);
   }
   if (!event.target.closest("[data-contact-anchor]")) closeContact(true);
-  if (activeResearch && !event.target.closest("[data-research-card]")) {
-    resetResearch();
-  }
   if (!event.target.closest("[data-swap-media]")) resetMedia();
 });
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
   const restoreSettings = settingsOpen && !contactTrigger;
   closeContact(true);
-  resetResearch();
   resetMedia();
   settingsPinned = false;
   updateSettings(false);
@@ -629,6 +785,7 @@ addEventListener("hashchange", updateResourceView);
 
 localize();
 applyAppearance();
+initializeResearch();
 updateLanguage(language);
 root.style.visibility = "";
 updateResourceView();
