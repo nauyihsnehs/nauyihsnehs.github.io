@@ -41,9 +41,9 @@ export const content = {
     },
     portrait: {
       sources: [
-        "content/profile/avatar-pixel.png",
-        "content/profile/avatar-cubism.png",
-        "content/profile/avatar-Mondrian.png",
+        "content/profile/avatar-pixel.webp",
+        "content/profile/avatar-cubism.webp",
+        "content/profile/avatar-Mondrian.webp",
       ],
       alt: {
         en: "Stylized portrait of Your Name",

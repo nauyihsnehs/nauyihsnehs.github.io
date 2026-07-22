@@ -119,7 +119,7 @@ export const renderSite = (content, buildTime) => {
       <div class="profile-contact-popover" id="contact-popover-${item.platform}" data-contact-popover role="dialog" aria-modal="false" aria-labelledby="contact-popover-title-${item.platform}">
         <button class="contact-popover-close" type="button" data-contact-close ${attribute(content.ui.closeContact, "aria-label")} title="${escape(content.ui.closeContact[defaultLanguage])}">×</button>
         <strong id="contact-popover-title-${item.platform}">${escape(item.label)}</strong>
-        <img src="./${asset(item.qr)}" ${attribute(item.qrAlt, "alt")} width="160" height="160" loading="lazy"/>
+        <img src="./${asset(item.qr)}" ${attribute(item.qrAlt, "alt")} width="160" height="160" loading="lazy" decoding="async"/>
         <span class="contact-account">${escape(item.account)}</span>
       </div>
     </template>`;
@@ -150,7 +150,7 @@ export const renderSite = (content, buildTime) => {
       : `<img class="media-alternate" data-motion-image data-src="./${asset(teaser.motion.src)}" alt="" aria-hidden="true"/>`;
   };
   const teaser = (item, label) =>
-    `<div class="swap-media teaser-media" data-swap-media data-motion="true" role="button" tabindex="0" ${attribute(label, "aria-label")} aria-pressed="false"><img class="media-primary" src="./${asset(item.poster)}" ${attribute(item.alt, "alt")} loading="lazy"/>${motion(item)}</div>`;
+    `<div class="swap-media teaser-media" data-swap-media data-motion="true" role="button" tabindex="0" ${attribute(label, "aria-label")} aria-pressed="false"><img class="media-primary" src="./${asset(item.poster)}" ${attribute(item.alt, "alt")} loading="lazy" decoding="async"/>${motion(item)}</div>`;
   const date = (value) => {
     const [year, month] = value.split("-");
     const real = /^\d{4}$/.test(year);
@@ -180,7 +180,7 @@ export const renderSite = (content, buildTime) => {
         `--research-title-view-name:research-title-${itemIndex};` +
         `--research-details-view-name:research-details-${itemIndex}`;
       const card = (item, itemIndex, clone = false) =>
-        `<article class="research-card" data-research-index="${itemIndex}" style="${viewNames(itemIndex)}"${clone ? " data-research-clone aria-hidden=\"true\" inert" : ` data-research-card="${item.id}"${itemIndex === 0 ? ' data-research-active="true"' : ""}`}><div class="research-visual"><img src="./${asset(item.image.src)}" ${attribute(item.image.alt, "alt")} loading="lazy"/></div><div class="research-copy">${text(item.title, "h3")}<div class="research-details"><p class="research-description" data-i="${index(item.description)}">${escape(item.description[defaultLanguage])}</p><ul class="research-keywords" ${attribute(item.title, "aria-label")}>${item.keywords[defaultLanguage].map((word, wordIndex) => `<li data-i="${index(item.keywords[alternateLanguage][wordIndex])}">${escape(word)}</li>`).join("")}</ul></div></div></article>`;
+        `<article class="research-card" data-research-index="${itemIndex}" style="${viewNames(itemIndex)}"${clone ? " data-research-clone aria-hidden=\"true\" inert" : ` data-research-card="${item.id}"${itemIndex === 0 ? ' data-research-active="true"' : ""}`}><div class="research-visual"><img src="./${asset(item.image.src)}" ${attribute(item.image.alt, "alt")} loading="lazy" decoding="async"/></div><div class="research-copy">${text(item.title, "h3")}<div class="research-details"><p class="research-description" data-i="${index(item.description)}">${escape(item.description[defaultLanguage])}</p><ul class="research-keywords" ${attribute(item.title, "aria-label")}>${item.keywords[defaultLanguage].map((word, wordIndex) => `<li data-i="${index(item.keywords[alternateLanguage][wordIndex])}">${escape(word)}</li>`).join("")}</ul></div></div></article>`;
       const previewLabel = (direction, item) => {
         const action = content.ui[direction < 0 ? "previousResearch" : "nextResearch"];
         return {
@@ -191,7 +191,7 @@ export const renderSite = (content, buildTime) => {
       const previews = (direction, initialIndex) => items
         .map((item, itemIndex) => {
           const active = itemIndex === initialIndex;
-          return `<button class="research-preview" type="button" data-research-preview data-research-preview-index="${itemIndex}" data-research-direction="${direction}" style="${viewNames(itemIndex)}"${active ? ' data-research-preview-active="true"' : " hidden"} ${attribute(previewLabel(direction, item), "aria-label")}><img src="./${asset(item.image.src)}" alt="" aria-hidden="true" loading="lazy"/>${text(item.title, "span", ' class="research-preview-title"')}</button>`;
+          return `<button class="research-preview" type="button" data-research-preview data-research-preview-index="${itemIndex}" data-research-direction="${direction}" style="${viewNames(itemIndex)}"${active ? ' data-research-preview-active="true"' : " hidden"} ${attribute(previewLabel(direction, item), "aria-label")}><img src="./${asset(item.image.src)}" alt="" aria-hidden="true" loading="lazy" decoding="async"/>${text(item.title, "span", ' class="research-preview-title"')}</button>`;
         })
         .join("");
       const cards = items
@@ -215,7 +215,7 @@ export const renderSite = (content, buildTime) => {
         .join("")}</div>`,
     education: (section) =>
       `<div class="education-timeline">${enabled(section.items)
-        .map((item) => `<article class="education-item"><div class="education-dates">${date(item.startDate)}${date(item.endDate)}</div><div class="education-copy${item.highlights?.length ? "" : " education-copy--compact"}">${item.institutionUrl ? `<a class="education-logo" href="${escape(item.institutionUrl)}" target="_blank" rel="noreferrer"><img src="./${asset(item.logo)}" ${attribute(item.logoAlt, "alt")} loading="lazy"/></a>` : `<span class="education-logo"><img src="./${asset(item.logo)}" ${attribute(item.logoAlt, "alt")} loading="lazy"/></span>`}<div class="education-text">${text(item.institution, "h3")}${text(item.degree, "p")}${text(item.detail, "p", ' class="secondary"')}</div>${item.highlights?.length ? `<ul class="education-highlights">${item.highlights.map((highlight) => `<li>${highlight.href ? `<a href="${escape(highlight.href)}" target="_blank" rel="noreferrer" data-i="${index(highlight.text)}">${escape(highlight.text[defaultLanguage])}</a>` : text(highlight.text)}</li>`).join("")}</ul>` : ""}</div></article>`)
+        .map((item) => `<article class="education-item"><div class="education-dates">${date(item.startDate)}${date(item.endDate)}</div><div class="education-copy${item.highlights?.length ? "" : " education-copy--compact"}">${item.institutionUrl ? `<a class="education-logo" href="${escape(item.institutionUrl)}" target="_blank" rel="noreferrer"><img src="./${asset(item.logo)}" ${attribute(item.logoAlt, "alt")} loading="lazy" decoding="async"/></a>` : `<span class="education-logo"><img src="./${asset(item.logo)}" ${attribute(item.logoAlt, "alt")} loading="lazy" decoding="async"/></span>`}<div class="education-text">${text(item.institution, "h3")}${text(item.degree, "p")}${text(item.detail, "p", ' class="secondary"')}</div>${item.highlights?.length ? `<ul class="education-highlights">${item.highlights.map((highlight) => `<li>${highlight.href ? `<a href="${escape(highlight.href)}" target="_blank" rel="noreferrer" data-i="${index(highlight.text)}">${escape(highlight.text[defaultLanguage])}</a>` : text(highlight.text)}</li>`).join("")}</ul>` : ""}</div></article>`)
         .join("")}</div>`,
     projects: (section) =>
       `<div class="project-list">${enabled(section.items)
@@ -238,7 +238,7 @@ export const renderSite = (content, buildTime) => {
   );
   const main = `
       <header class="profile-header">
-        <div class="swap-media portrait-media" data-portrait-carousel data-portrait-index="0" data-portrait-sources="${escape(JSON.stringify(portraitSources))}" role="button" tabindex="0" ${attribute(content.ui.cyclePortrait, "aria-label")}><img class="media-primary" data-portrait-image src="./${asset(content.profile.portrait.sources[0])}" ${attribute(content.profile.portrait.alt, "alt")} width="1086" height="1448" fetchpriority="high"/></div>
+        <div class="swap-media portrait-media" data-portrait-carousel data-portrait-index="0" data-portrait-sources="${escape(JSON.stringify(portraitSources))}" role="button" tabindex="0" ${attribute(content.ui.cyclePortrait, "aria-label")}><img class="media-primary" data-portrait-image src="./${asset(content.profile.portrait.sources[0])}" ${attribute(content.profile.portrait.alt, "alt")} width="480" height="640" decoding="async" fetchpriority="high"/></div>
         <div class="profile-copy"><h1>${text(content.profile.name)}${alternateName}</h1>${text(content.profile.role, "p", ' class="profile-role"')}${text(content.profile.introduction, "p", ' class="profile-introduction"')}</div>
       </header>
       ${sections}`;

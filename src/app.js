@@ -243,9 +243,50 @@ const updateResourceView = () => {
   });
 };
 
-const cyclePortrait = (portrait) => {
+const portraitLoads = new Map();
+
+const loadPortrait = (source) => {
+  const cached = portraitLoads.get(source);
+  if (cached) return cached.ready;
+  const image = new Image();
+  image.decoding = "async";
+  const ready = new Promise((resolve) => {
+    image.addEventListener(
+      "load",
+      () => {
+        const decoded = image.decode?.() ?? Promise.resolve();
+        decoded.then(() => resolve(true), () => resolve(true));
+      },
+      { once: true },
+    );
+    image.addEventListener("error", () => resolve(false), { once: true });
+  });
+  image.src = source;
+  portraitLoads.set(source, { image, ready });
+  return ready;
+};
+
+const preloadPortraits = () => {
+  const preload = () =>
+    app.querySelectorAll("[data-portrait-carousel]").forEach((portrait) =>
+      JSON.parse(portrait.dataset.portraitSources).forEach(loadPortrait),
+    );
+  const schedule = window.requestIdleCallback
+    ? (callback) => requestIdleCallback(callback, { timeout: 1500 })
+    : (callback) => setTimeout(callback, 0);
+  schedule(preload);
+};
+
+const cyclePortrait = async (portrait) => {
+  if (portrait.dataset.portraitLoading === "true") return;
   const sources = JSON.parse(portrait.dataset.portraitSources);
   const index = (Number(portrait.dataset.portraitIndex) + 1) % sources.length;
+  portrait.dataset.portraitLoading = "true";
+  portrait.setAttribute("aria-busy", "true");
+  const loaded = await loadPortrait(sources[index]);
+  delete portrait.dataset.portraitLoading;
+  portrait.removeAttribute("aria-busy");
+  if (!loaded) return;
   portrait.dataset.portraitIndex = String(index);
   portrait.querySelector("[data-portrait-image]").src = sources[index];
 };
@@ -790,3 +831,4 @@ updateLanguage(language);
 root.style.visibility = "";
 updateResourceView();
 updateBackToTop();
+preloadPortraits();
